@@ -1,126 +1,777 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connections TNI edition (made by Anurag)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connections: T/NI Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: sans-serif;
-      background: #f6f6f6;
+      background: #ddd0cc;
+      font-family: 'Inter', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1.5px solid rgba(0,0,0,0.18);
+    }
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #1a1a1a;
+    }
+    .header-actions { display: flex; gap: 8px; }
+    .hdr-btn {
+      background: white;
+      border: 1.5px solid #333;
+      border-radius: 20px;
+      padding: 6px 13px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .hdr-btn:hover { background: #333; color: white; }
+
+    /* ── MAIN CONTAINER ── */
+    .game-wrap {
+      width: 100%;
+      max-width: 640px;
+      padding: 14px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Timer */
+    .timer {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 0.06em;
+    }
+
+    .subtitle {
+      font-size: 0.83rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    /* ── REVEALED CATEGORIES ── */
+    .revealed-cats {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rev-tile {
+      width: 100%;
+      border-radius: 10px;
+      padding: 13px 12px;
       text-align: center;
-      padding: 2rem;
+      animation: popIn 0.38s cubic-bezier(0.34,1.56,0.64,1) both;
     }
-    h1 {
-      color: #222;
+    @keyframes popIn {
+      from { transform: scale(0.82); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
     }
+    .rev-cat-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #1a1a1a;
+      opacity: 0.75;
+    }
+    .rev-cat-words {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── GRID ── */
     .grid {
+      width: 100%;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      max-width: 600px;
-      margin: 2rem auto;
+      gap: 8px;
     }
-    .word {
-      background: white;
-      border: 2px solid #ccc;
+    .tile {
+      background: #efede8;
       border-radius: 8px;
-      padding: 1rem;
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-align: center;
       cursor: pointer;
-      font-size: 1rem;
       user-select: none;
-      transition: 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #1a1a1a;
+      padding: 8px;
+      line-height: 1.25;
+      transition: background 0.12s, transform 0.1s;
+      border: 2px solid transparent;
     }
-    .word.selected {
-      background-color: #cce5ff;
-      border-color: #3399ff;
+    .tile:hover:not(.selected) { background: #e0ddd8; }
+    .tile.selected { background: #4a4a40; color: #fff; }
+
+    /* Animations */
+    .tile.shake {
+      animation: shake 0.55s cubic-bezier(.36,.07,.19,.97) both;
     }
-    .grouped {
-      background-color: #d4edda;
-      border-color: #28a745;
-      color: #155724;
+    @keyframes shake {
+      10%,90%  { transform: translate3d(-3px,0,0); }
+      20%,80%  { transform: translate3d(6px,0,0);  }
+      30%,50%,70% { transform: translate3d(-6px,0,0); }
+      40%,60%  { transform: translate3d(6px,0,0);  }
     }
-    .result {
-      margin-top: 1rem;
-      font-weight: bold;
+    .tile.jump {
+      animation: jump 0.4s ease-in-out forwards;
+    }
+    @keyframes jump {
+      0%   { transform: translateY(0); }
+      40%  { transform: translateY(-18px); }
+      70%  { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
+    }
+
+    /* ── RESULT MESSAGE ── */
+    .result-msg {
+      font-size: 0.9rem;
+      font-weight: 700;
+      min-height: 22px;
       color: #333;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── MISTAKE DOTS ── */
+    .mistakes-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .mistakes-label {
+      font-size: 0.81rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .dots { display: flex; gap: 6px; }
+    .dot {
+      width: 15px; height: 15px;
+      border-radius: 50%;
+      background: #4a4a40;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.gone {
+      background: transparent;
+      border: 2px solid #aaa;
+      transform: scale(0.82);
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .ctrl-btn {
+      padding: 11px 22px;
+      border-radius: 30px;
+      border: 2px solid #1a1a1a;
+      background: transparent;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.14s, color 0.14s;
+      letter-spacing: 0.02em;
+    }
+    .ctrl-btn:not(:disabled):hover { background: #1a1a1a; color: white; }
+    .ctrl-btn:disabled { opacity: 0.33; cursor: not-allowed; }
+    .ctrl-btn.primary { background: #1a1a1a; color: white; }
+    .ctrl-btn.primary:not(:disabled):hover { background: #444; border-color: #444; }
+
+    /* ── OVERLAY / MODAL ── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.42);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 14px;
+      padding: 26px 26px 22px;
+      width: 90%; max-width: 400px;
+      position: relative;
+      box-shadow: 0 22px 60px rgba(0,0,0,0.22);
+      animation: mIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes mIn {
+      from { transform: scale(0.86) translateY(18px); opacity: 0; }
+      to   { transform: scale(1)    translateY(0);    opacity: 1; }
+    }
+    .modal-head { text-align: center; margin-bottom: 14px; }
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .modal-sub {
+      font-size: 0.76rem;
+      color: #888;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .close-x {
+      position: absolute; top: 13px; right: 15px;
+      background: none; border: none;
+      font-size: 1.25rem; cursor: pointer;
+      color: #666; line-height: 1; padding: 4px;
+    }
+    .close-x:hover { color: #111; }
+    .mdivider { border: none; border-top: 1px solid #eee; margin: 13px 0; }
+
+    /* How To Play */
+    .htp-body p {
+      font-size: 0.84rem;
+      line-height: 1.72;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .htp-body p:last-child { margin-bottom: 0; }
+    .diff-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+    .diff-row { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; font-weight: 600; }
+    .diff-swatch { width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 8px 0;
+    }
+    .stat-box {
+      text-align: center;
+      padding: 14px 8px;
+      background: #f6f5f3;
+      border-radius: 10px;
+    }
+    .stat-val {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1a1a1a;
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #777;
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    /* Game Over Answers */
+    .go-answers { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .go-row { border-radius: 8px; padding: 10px 14px; }
+    .go-row-name {
+      font-weight: 700; font-size: 0.7rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      opacity: 0.78;
+    }
+    .go-row-words {
+      font-weight: 800; margin-top: 2px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      font-size: 0.88rem;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 76px; left: 50%;
+      transform: translateX(-50%) translateY(-14px);
+      background: #1a1a1a; color: white;
+      padding: 9px 22px; border-radius: 30px;
+      font-size: 0.88rem; font-weight: 700;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 500; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 480px) {
+      .header-title { font-size: 0.98rem; }
+      .tile { height: 68px; font-size: 0.73rem; }
+      .modal { padding: 20px 16px 18px; }
+      .stat-val { font-size: 1.6rem; }
     }
   </style>
 </head>
 <body>
-  <h1>🧩 Connections: TNI Edition</h1>
-  <p>Select 4 related words to find a group.</p>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="header">
+  <div class="header-title">Connections: T/NI Edition</div>
+  <div class="header-actions">
+    <button class="hdr-btn" id="howToPlayBtn">❓ How to Play</button>
+    <button class="hdr-btn" id="statsBtn">📊 Stats</button>
+  </div>
+</header>
+
+<!-- ══════════ GAME ══════════ -->
+<div class="game-wrap">
+  <div class="timer" id="timer">0:00</div>
+  <div class="subtitle">Create four groups of four!</div>
+  <div class="revealed-cats" id="revealedCats"></div>
   <div class="grid" id="grid"></div>
-  <div class="result" id="result"></div>
+  <div class="result-msg" id="resultMsg"></div>
+  <div class="mistakes-row">
+    <span class="mistakes-label">Mistakes remaining:</span>
+    <div class="dots" id="dots">
+      <div class="dot" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctrl-btn" id="shuffleBtn">Shuffle</button>
+    <button class="ctrl-btn" id="deselectBtn" disabled>Deselect All</button>
+    <button class="ctrl-btn primary" id="submitBtn" disabled>Submit</button>
+  </div>
+</div>
 
-  <script>
-    const categories = {
-      "Pillars of our EIP program (1-word)": ["Protection", "Inclusion", "Empowerment", "Resilient"],
-      "Components of our Socent program": ["Grant", "Connect", "Mentoring", "Bootcamp"],
-      "Terms found in our EVP": ["Tribe", "Bets", "Happen", "Growth"],
-      "Terms found in Spirits of TNI": ["Founder", "Scale", "Purpose", "Together"]
-    };
+<!-- ══════════ TOAST ══════════ -->
+<div class="toast" id="toast"></div>
 
-    const allWords = Object.values(categories).flat();
-    const shuffledWords = allWords.sort(() => Math.random() - 0.5);
+<!-- ══════════ HOW TO PLAY MODAL ══════════ -->
+<div class="overlay" id="htpOverlay">
+  <div class="modal">
+    <button class="close-x" id="closeHtp">✕</button>
+    <div class="modal-head">
+      <div class="modal-title">How to Play</div>
+      <div class="modal-sub">Connections: T/NI Edition</div>
+    </div>
+    <hr class="mdivider" />
+    <div class="htp-body">
+      <p>Find groups of four words that share something in common within the <strong>T/NI universe</strong>.</p>
+      <p>Select four items and tap <strong>Submit</strong> to check if your guess is correct.</p>
+      <p>Find all four groups to win! Each puzzle has exactly one solution. Some words might seem to fit multiple categories — think carefully before submitting!</p>
+      <hr class="mdivider" />
+      <p><strong>Category difficulty:</strong></p>
+      <div class="diff-list">
+        <div class="diff-row"><div class="diff-swatch" style="background:#F9DF6D;"></div>Straightforward</div>
+        <div class="diff-row"><div class="diff-swatch" style="background:#A0C35A;"></div>Moderate</div>
+        <div class="diff-row"><div class="diff-swatch" style="background:#B0C4EF;"></div>Tricky</div>
+        <div class="diff-row"><div class="diff-swatch" style="background:#BA81C5;"></div>Very Tricky</div>
+      </div>
+      <hr class="mdivider" />
+      <p>You have <strong>4 mistakes</strong> allowed. Good luck! 🎯</p>
+    </div>
+  </div>
+</div>
 
-    const grid = document.getElementById("grid");
-    const result = document.getElementById("result");
+<!-- ══════════ STATS MODAL ══════════ -->
+<div class="overlay" id="statsOverlay">
+  <div class="modal">
+    <button class="close-x" id="closeStats">✕</button>
+    <div class="modal-head">
+      <div class="modal-title">Statistics</div>
+      <div class="modal-sub">Your performance so far</div>
+    </div>
+    <hr class="mdivider" />
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="s-plays">0</div>
+        <div class="stat-lbl">Number of Plays</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-fastest">—</div>
+        <div class="stat-lbl">Fastest Time to Solve</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-perfect">0%</div>
+        <div class="stat-lbl">Perfect Game Rate</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-avg">—</div>
+        <div class="stat-lbl">Avg. Guesses to Solve</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    let selected = [];
-    let foundGroups = [];
+<!-- ══════════ GAME OVER MODAL ══════════ -->
+<div class="overlay" id="goOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="goTitle">Puzzle Complete!</div>
+      <div class="modal-sub" id="goSub"></div>
+    </div>
+    <hr class="mdivider" />
+    <div class="go-answers" id="goAnswers"></div>
+    <div style="text-align:center; margin-top:18px;">
+      <button class="ctrl-btn primary" id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+</div>
 
-    function renderGrid() {
-      grid.innerHTML = "";
-      shuffledWords.forEach(word => {
-        const div = document.createElement("div");
-        div.className = "word";
-        div.innerText = word;
-        div.addEventListener("click", () => toggleSelect(div, word));
-        grid.appendChild(div);
-      });
-    }
+<script>
+// ══════════ DATA ══════════
+const CATEGORIES = [
+  {
+    id: 0,
+    name: "Pillars of our EIP program",
+    color: "#F9DF6D",
+    words: ["PROTECTION", "INCLUSION", "EMPOWERMENT", "RESILIENT"]
+  },
+  {
+    id: 1,
+    name: "Components of our Socent program",
+    color: "#A0C35A",
+    words: ["GRANT", "CONNECT", "MENTORING", "BOOTCAMP"]
+  },
+  {
+    id: 2,
+    name: "Terms found in our EVP",
+    color: "#B0C4EF",
+    words: ["TRIBE", "BETS", "HAPPEN", "GROWTH"]
+  },
+  {
+    id: 3,
+    name: "Terms found in Spirits of T/NI",
+    color: "#BA81C5",
+    words: ["FOUNDER", "SCALE", "PURPOSE", "TOGETHER"]
+  }
+];
 
-    function toggleSelect(div, word) {
-      if (div.classList.contains("grouped")) return;
+// ══════════ STATE ══════════
+let displayTiles = [];   // [{word, catId}] — shuffled display order
+let selected     = new Set();
+let solvedIds    = new Set();
+let mistakes     = 0;
+let gameOver     = false;
+let timerSec     = 0;
+let timerHandle  = null;
+let totalGuesses = 0;
 
-      if (div.classList.contains("selected")) {
-        div.classList.remove("selected");
-        selected = selected.filter(w => w !== word);
-      } else {
-        if (selected.length === 4) return;
-        div.classList.add("selected");
-        selected.push(word);
+// ══════════ HELPERS ══════════
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
 
-        if (selected.length === 4) {
-          checkGroup();
-        }
-      }
-    }
+// ══════════ INIT ══════════
+function initGame() {
+  displayTiles = CATEGORIES.flatMap(c => c.words.map(w => ({ word: w, catId: c.id })));
+  shuffle(displayTiles);
+  selected     = new Set();
+  solvedIds    = new Set();
+  mistakes     = 0;
+  gameOver     = false;
+  timerSec     = 0;
+  totalGuesses = 0;
 
-    function checkGroup() {
-      for (const [category, words] of Object.entries(categories)) {
-        if (selected.every(w => words.includes(w))) {
-          document.querySelectorAll(".selected").forEach(div => {
-            div.classList.remove("selected");
-            div.classList.add("grouped");
-          });
-          foundGroups.push(category);
-          result.innerText = `✅ Correct! Category: ${category}`;
-          selected = [];
-          return;
-        }
-      }
+  document.getElementById('revealedCats').innerHTML = '';
+  document.getElementById('resultMsg').textContent  = '';
+  clearInterval(timerHandle);
+  updateTimerUI();
+  timerHandle = setInterval(() => { if (!gameOver) { timerSec++; updateTimerUI(); } }, 1000);
 
-      result.innerText = "❌ Incorrect group. Try again.";
-      setTimeout(() => {
-        document.querySelectorAll(".selected").forEach(div => div.classList.remove("selected"));
-        selected = [];
-        result.innerText = "";
-      }, 1000);
-    }
+  renderGrid();
+  updateDots();
+  updateControls();
+}
+
+// ══════════ TIMER ══════════
+function updateTimerUI() {
+  const m = Math.floor(timerSec / 60);
+  const s = timerSec % 60;
+  document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// ══════════ GRID ══════════
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  displayTiles.forEach(({ word }) => {
+    const div = document.createElement('div');
+    div.className = 'tile' + (selected.has(word) ? ' selected' : '');
+    div.textContent = word;
+    div.dataset.word = word;
+    div.addEventListener('click', () => onTileClick(word));
+    grid.appendChild(div);
+  });
+}
+
+// ══════════ TILE CLICK ══════════
+function onTileClick(word) {
+  if (gameOver) return;
+  if (selected.has(word)) {
+    selected.delete(word);
+  } else {
+    if (selected.size >= 4) return;
+    selected.add(word);
+  }
+  renderGrid();
+  updateControls();
+}
+
+// ══════════ CONTROLS ══════════
+function updateControls() {
+  document.getElementById('submitBtn').disabled  = selected.size !== 4 || gameOver;
+  document.getElementById('deselectBtn').disabled = selected.size === 0 || gameOver;
+  document.getElementById('shuffleBtn').disabled  = gameOver;
+}
+
+// ══════════ DOTS ══════════
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById(`d${i}`);
+    dot.className = 'dot' + (i >= (4 - mistakes) ? ' gone' : '');
+  }
+}
+
+// ══════════ SUBMIT ══════════
+function onSubmit() {
+  if (selected.size !== 4 || gameOver) return;
+  totalGuesses++;
+  const words  = [...selected];
+  const catIds = words.map(w => displayTiles.find(t => t.word === w).catId);
+
+  if (catIds.every(id => id === catIds[0])) {
+    const cat = CATEGORIES.find(c => c.id === catIds[0]);
+    animateCorrect(words, cat);
+  } else {
+    const counts   = {};
+    catIds.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+    const maxCount = Math.max(...Object.values(counts));
+    animateWrong(words, maxCount === 3);
+  }
+}
+
+// ══════════ CORRECT GUESS ══════════
+function animateCorrect(words, cat) {
+  const allTiles = [...document.getElementById('grid').querySelectorAll('.tile')];
+  const matching = allTiles.filter(d => words.includes(d.dataset.word));
+  matching.forEach((d, i) => setTimeout(() => d.classList.add('jump'), i * 90));
+
+  setTimeout(() => {
+    solvedIds.add(cat.id);
+    displayTiles = displayTiles.filter(t => t.catId !== cat.id);
+    selected.clear();
+
+    const div = document.createElement('div');
+    div.className = 'rev-tile';
+    div.style.background = cat.color;
+    div.innerHTML = `
+      <div class="rev-cat-label">${cat.name}</div>
+      <div class="rev-cat-words">${words.join(' · ')}</div>
+    `;
+    document.getElementById('revealedCats').appendChild(div);
+    document.getElementById('resultMsg').textContent = '';
 
     renderGrid();
-  </script>
+    updateControls();
+
+    if (displayTiles.length === 0) setTimeout(() => endGame(true), 360);
+  }, 520);
+}
+
+// ══════════ WRONG GUESS ══════════
+function animateWrong(words, oneAway) {
+  mistakes++;
+  updateDots();
+
+  const allTiles = [...document.getElementById('grid').querySelectorAll('.tile')];
+  words.forEach(w => {
+    const el = allTiles.find(d => d.dataset.word === w);
+    if (el) {
+      el.classList.remove('shake');
+      void el.offsetWidth;
+      el.classList.add('shake');
+      setTimeout(() => el.classList.remove('shake'), 600);
+    }
+  });
+
+  showResult(oneAway ? 'One away... 👀' : 'Not quite!', 2200);
+
+  setTimeout(() => {
+    selected.clear();
+    renderGrid();
+    updateControls();
+    if (mistakes >= 4) setTimeout(() => endGame(false), 400);
+  }, 650);
+}
+
+// ══════════ RESULT MSG ══════════
+let resultTimer = null;
+function showResult(msg, dur) {
+  document.getElementById('resultMsg').textContent = msg;
+  clearTimeout(resultTimer);
+  if (dur) resultTimer = setTimeout(() => {
+    document.getElementById('resultMsg').textContent = '';
+  }, dur);
+}
+
+// ══════════ TOAST ══════════
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ══════════ END GAME ══════════
+function endGame(won) {
+  gameOver = true;
+  clearInterval(timerHandle);
+
+  // Persist stats
+  const s = loadStats();
+  s.plays++;
+  if (won) {
+    s.wins++;
+    s.totalWinGuesses += totalGuesses;
+    if (mistakes === 0) s.perfectGames++;
+    if (s.fastestTime === null || timerSec < s.fastestTime) s.fastestTime = timerSec;
+  }
+  saveStats(s);
+
+  // Build modal
+  if (won) {
+    document.getElementById('goTitle').textContent = mistakes === 0 ? '🎉 Flawless Victory!' : '🎊 Puzzle Solved!';
+    const tStr = `${Math.floor(timerSec/60)}:${(timerSec%60).toString().padStart(2,'0')}`;
+    document.getElementById('goSub').textContent =
+      mistakes === 0
+        ? `Perfect game — no mistakes! Time: ${tStr}`
+        : `Solved in ${tStr} with ${mistakes} mistake${mistakes !== 1 ? 's' : ''}`;
+  } else {
+    document.getElementById('goTitle').textContent = 'Better Luck Next Time!';
+    document.getElementById('goSub').textContent   = 'Here are today\'s answers:';
+  }
+
+  const goAnswers = document.getElementById('goAnswers');
+  goAnswers.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const row = document.createElement('div');
+    row.className = 'go-row';
+    row.style.background = cat.color;
+    row.innerHTML = `
+      <div class="go-row-name">${cat.name}</div>
+      <div class="go-row-words">${cat.words.join(' · ')}</div>
+    `;
+    goAnswers.appendChild(row);
+  });
+
+  setTimeout(() => document.getElementById('goOverlay').classList.add('open'), won ? 750 : 350);
+  if (won && mistakes === 0) showToast('🎉 Perfect Game!');
+  else if (won) showToast('Well done!');
+}
+
+// ══════════ STATS ══════════
+function loadStats() {
+  try {
+    const s = JSON.parse(localStorage.getItem('tni_conn_v1'));
+    if (s) return s;
+  } catch (e) {}
+  return { plays: 0, wins: 0, perfectGames: 0, fastestTime: null, totalWinGuesses: 0 };
+}
+function saveStats(s) {
+  localStorage.setItem('tni_conn_v1', JSON.stringify(s));
+}
+function renderStats() {
+  const s = loadStats();
+  document.getElementById('s-plays').textContent = s.plays;
+
+  if (s.fastestTime !== null) {
+    const m  = Math.floor(s.fastestTime / 60);
+    const sc = s.fastestTime % 60;
+    document.getElementById('s-fastest').textContent = `${m}:${sc.toString().padStart(2,'0')}`;
+  } else {
+    document.getElementById('s-fastest').textContent = '—';
+  }
+
+  document.getElementById('s-perfect').textContent =
+    s.plays > 0 ? Math.round((s.perfectGames / s.plays) * 100) + '%' : '0%';
+
+  document.getElementById('s-avg').textContent =
+    s.wins > 0 ? (s.totalWinGuesses / s.wins).toFixed(1) : '—';
+}
+
+// ══════════ EVENT LISTENERS ══════════
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+  shuffle(displayTiles); renderGrid();
+});
+document.getElementById('deselectBtn').addEventListener('click', () => {
+  selected.clear(); renderGrid(); updateControls();
+});
+document.getElementById('submitBtn').addEventListener('click', onSubmit);
+
+// How to Play
+document.getElementById('howToPlayBtn').addEventListener('click', () =>
+  document.getElementById('htpOverlay').classList.add('open'));
+document.getElementById('closeHtp').addEventListener('click', () =>
+  document.getElementById('htpOverlay').classList.remove('open'));
+document.getElementById('htpOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// Stats
+document.getElementById('statsBtn').addEventListener('click', () => {
+  renderStats();
+  document.getElementById('statsOverlay').classList.add('open');
+});
+document.getElementById('closeStats').addEventListener('click', () =>
+  document.getElementById('statsOverlay').classList.remove('open'));
+document.getElementById('statsOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// Play Again
+document.getElementById('playAgainBtn').addEventListener('click', () => {
+  document.getElementById('goOverlay').classList.remove('open');
+  initGame();
+});
+
+// ══════════ START ══════════
+initGame();
+</script>
 </body>
 </html>
