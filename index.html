@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The/Nudge OKR Checker — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#F7F5F2;color:#1a1a1a;min-height:100vh}
+.page{max-width:800px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:.5rem}
+.logo{width:36px;height:36px;border-radius:8px;background:#D85A30;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}
+.header h1{font-size:18px;font-weight:600}
+.header p{font-size:13px;color:#888;margin-top:1px}
+.badge-row{display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+.pc-badge{display:inline-block;background:#FAECE7;color:#993C1D;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px}
+.demo-badge{display:inline-flex;align-items:center;gap:5px;background:#E6F1FB;color:#185FA5;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.demo-dot{width:7px;height:7px;border-radius:50%;background:#185FA5;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tabs{display:flex;border-bottom:1.5px solid #E8E4DE;margin-bottom:1.75rem}
+.tab{padding:9px 20px;font-size:14px;background:none;border:none;border-bottom:2.5px solid transparent;color:#888;cursor:pointer;font-family:inherit;margin-bottom:-1.5px;font-weight:500}
+.tab.active{color:#D85A30;border-bottom-color:#D85A30}
+.card{background:#fff;border:1px solid #EAE7E2;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+select{width:100%;padding:9px 12px;border:1px solid #DDD8D0;border-radius:8px;background:#fff;color:#1a1a1a;font-size:14px;font-family:inherit}
+select:focus{outline:none;border-color:#D85A30}
+textarea{width:100%;padding:9px 12px;border:1px solid #DDD8D0;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit;resize:vertical;line-height:1.6}
+textarea:focus{outline:none;border-color:#D85A30}
+.privacy{display:flex;gap:8px;align-items:flex-start;background:#FEF9F0;border:1px solid #F5E4C4;border-radius:8px;padding:9px 13px;margin-bottom:1rem;font-size:12px;color:#7a5c1a;line-height:1.5}
+.obj-block{background:#fff;border:1px solid #EAE7E2;border-radius:12px;margin-bottom:12px;overflow:hidden}
+.obj-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F9F8F6;border-bottom:1px solid #EAE7E2}
+.obj-hdr-l{display:flex;align-items:center;gap:9px}
+.obj-n{width:24px;height:24px;border-radius:50%;background:#D85A30;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.obj-lbl{font-size:13px;font-weight:600;color:#333}
+.btn-del-obj{background:none;border:1px solid #DDD8D0;color:#888;cursor:pointer;font-size:12px;font-family:inherit;padding:4px 10px;border-radius:6px}
+.btn-del-obj:hover{color:#D85A30;border-color:#D85A30}
+.obj-body{padding:14px}
+.kr-row{display:flex;gap:8px;margin-bottom:7px;align-items:flex-start}
+.kr-n{width:22px;height:22px;border-radius:50%;background:#F0EDE8;font-size:11px;font-weight:600;color:#999;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:10px}
+.kr-n.on{background:#FAECE7;color:#993C1D}
+.btn-del-kr{background:none;border:none;color:#ccc;cursor:pointer;padding:3px;border-radius:3px;margin-top:9px;font-size:15px;line-height:1;flex-shrink:0}
+.btn-del-kr:hover{color:#D85A30}
+.btn-add-kr{background:none;border:1.5px dashed #DDD8D0;border-radius:8px;padding:6px 14px;font-size:12px;color:#888;cursor:pointer;font-family:inherit;margin-top:4px;display:block}
+.btn-add-kr:hover{border-color:#D85A30;color:#D85A30}
+.btn-add-obj{width:100%;background:none;border:1.5px dashed #DDD8D0;border-radius:12px;padding:11px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:1rem}
+.btn-add-obj:hover{border-color:#D85A30;color:#D85A30}
+.obj-limit{font-size:12px;color:#aaa;margin-bottom:.75rem;text-align:center}
+.btn-primary{background:#D85A30;color:#fff;border:none;border-radius:9px;padding:11px 28px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px}
+.btn-primary:hover{background:#b84b25}
+.btn-primary:disabled{background:#C8C3BB;cursor:not-allowed}
+.spin{width:17px;height:17px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.results{margin-top:1.25rem}
+.sum-row{display:flex;gap:10px;margin-bottom:14px}
+.sc{flex:1;background:#fff;border:1px solid #EAE7E2;border-radius:10px;padding:12px 14px;text-align:center}
+.sc-n{font-size:24px;font-weight:700}
+.sc-l{font-size:11px;color:#888;margin-top:3px}
+.res-block{background:#fff;border:1px solid #EAE7E2;border-radius:12px;margin-bottom:14px;overflow:hidden}
+.res-hdr{padding:14px 16px;background:#F9F8F6;border-bottom:1px solid #EAE7E2;display:flex;align-items:flex-start;gap:14px}
+.score-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.score-circle{width:58px;height:58px;border-radius:50%;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.vp{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;text-align:center;max-width:110px;line-height:1.3}
+.v-up{background:#EAF3DE;color:#3B6D11}
+.v-mn{background:#E1F5EE;color:#0F6E56}
+.v-rv{background:#FAEEDA;color:#854F0B}
+.v-rw{background:#FAECE7;color:#993C1D}
+.res-body{padding:14px 16px}
+.sec-hd{font-size:12px;font-weight:600;color:#333;margin-bottom:8px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.dr{display:flex;align-items:center;gap:8px}
+.dl{font-size:12px;color:#666;width:140px;flex-shrink:0}
+.dbg{flex:1;height:5px;background:#F0EDE8;border-radius:3px;overflow:hidden}
+.db{height:100%;border-radius:3px}
+.ds{font-size:12px;font-weight:700;width:38px;text-align:right}
+.divl{height:1px;background:#EAE7E2;margin:14px 0}
+.kr-card{background:#F9F8F6;border-radius:8px;padding:9px 12px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start}
+.kr-sc{width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kr-lbl{font-size:11px;font-weight:600;color:#888;margin-bottom:2px}
+.kr-txt{font-size:12px;color:#555;line-height:1.5}
+.fb-list{list-style:none}
+.fb-list li{font-size:12px;color:#555;padding:5px 0;border-bottom:1px solid #F0EDE8;display:flex;gap:7px;align-items:flex-start;line-height:1.55}
+.fb-list li:last-child{border-bottom:none}
+.fi{width:16px;height:16px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+.fi-ok{background:#EAF3DE;color:#3B6D11}
+.fi-w{background:#FAEEDA;color:#854F0B}
+.imp{background:#EEF5FC;border-radius:8px;padding:10px 14px;font-size:12px;color:#1a4d7a;line-height:1.6}
+.tscroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:1.25rem;scrollbar-width:none}
+.tscroll::-webkit-scrollbar{display:none}
+.tpill{background:#fff;border:1px solid #DDD8D0;border-radius:20px;padding:6px 14px;font-size:12px;color:#666;cursor:pointer;white-space:nowrap;font-family:inherit;font-weight:500}
+.tpill:hover,.tpill.on{border-color:#F0B8A0;color:#993C1D}
+.tpill.on{background:#FAECE7}
+.sset{background:#fff;border:1px solid #EAE7E2;border-radius:12px;margin-bottom:14px;overflow:hidden}
+.sset-hdr{padding:13px 16px;border-bottom:1px solid #EAE7E2;display:flex;align-items:flex-start;gap:11px}
+.sn{width:24px;height:24px;border-radius:50%;background:#FAECE7;color:#993C1D;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.sol{font-size:11px;color:#aaa;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.sot{font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.5}
+.ski{display:flex;gap:11px;padding:9px 16px;border-bottom:1px solid #F0EDE8;align-items:flex-start}
+.ski:last-child{border-bottom:none}
+.skd{width:7px;height:7px;border-radius:50%;background:#D85A30;flex-shrink:0;margin-top:6px}
+.skt{font-size:13px;color:#555;line-height:1.6}
+.skt strong{color:#1a1a1a;font-weight:600}
+.gc{background:#fff;border:1px solid #EAE7E2;border-radius:12px;overflow:hidden;margin-bottom:14px}
+.gh{padding:11px 14px;background:#F9F8F6;border-bottom:1px solid #EAE7E2;font-size:13px;font-weight:600;color:#333}
+.gb{padding:14px}
+.si{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.si-item{display:flex;gap:8px;align-items:flex-start}
+.sl{width:26px;height:26px;border-radius:6px;background:#FAECE7;color:#D85A30;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sd{font-size:12px;color:#444;line-height:1.4;padding-top:3px}
+.sd strong{color:#1a1a1a;display:block;font-weight:600}
+.gt{width:100%;border-collapse:collapse;font-size:12px}
+.gt th{text-align:left;padding:6px 10px;background:#F7F5F2;color:#666;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.gt td{padding:7px 10px;border-bottom:1px solid #F0EDE8;color:#444;vertical-align:top;line-height:1.5}
+.gt tr:last-child td{border-bottom:none}
+.gt .weak{color:#993C1D}
+.gt .good{color:#3B6D11}
+.ct{width:100%;border-collapse:collapse;font-size:13px}
+.ct td{padding:9px 14px;border-bottom:1px solid #F0EDE8;vertical-align:middle}
+.ct tr:last-child td{border-bottom:none}
+.cstep{width:28px;height:28px;border-radius:50%;background:#FAECE7;color:#D85A30;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:auto}
+.demo-info{background:#E6F1FB;border:1px solid #B5D4F4;border-radius:10px;padding:12px 16px;margin-bottom:1.25rem;display:flex;gap:10px;align-items:flex-start}
+.demo-info-text{font-size:13px;color:#185FA5;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <div class="logo">N</div>
+  <div>
+    <h1>OKR Quality Checker</h1>
+    <p>The/Nudge Institute &nbsp;·&nbsp; Internal Tool</p>
+  </div>
+</div>
+
+<div class="badge-row">
+  <div class="pc-badge">People &amp; Culture &nbsp;|&nbsp; Internal Use Only &nbsp;|&nbsp; 2025–26</div>
+  <div class="demo-badge"><div class="demo-dot"></div> Demo Mode — Simulated Results</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('checker',this)">Check my OKRs</button>
+  <button class="tab" onclick="showTab('samples',this)">Sample OKRs by team</button>
+  <button class="tab" onclick="showTab('guide',this)">Quick Reference</button>
+</div>
+
+<!-- CHECKER -->
+<div id="tab-checker">
+  <div class="demo-info">
+    <span style="font-size:18px;flex-shrink:0">👋</span>
+    <div class="demo-info-text">
+      <strong>This is a live demo for the team presentation.</strong> Enter any OKR below and click "Check OKR Quality" to see exactly how the tool evaluates and gives feedback. Results are simulated for the demo — the live version connects to the AI and evaluates in real time.
+    </div>
+  </div>
+  <div class="privacy">
+    <span style="font-size:14px;flex-shrink:0">🔒</span>
+    <span><strong>Data privacy:</strong> Do not enter sensitive beneficiary data, confidential financial targets, or personal information. OKR text describing work goals is safe to use here.</span>
+  </div>
+  <div class="card">
+    <div class="row2">
+      <div>
+        <div class="fl">Your team / function</div>
+        <select id="team-sel">
+          <option value="eip">Economic Inclusion Program (EIP)</option>
+          <option value="asha">Asha Kiran</option>
+          <option value="skilling">Centre for Skill Development &amp; Entrepreneurship</option>
+          <option value="incubator">Social Entrepreneurship — Incubator &amp; Accelerator</option>
+          <option value="iaf">Indian Administrative Fellowship (IAF)</option>
+          <option value="fundraising">Fundraising &amp; Partnerships</option>
+          <option value="tech">Technology, Data &amp; Insights</option>
+          <option value="impact">Impact &amp; Evaluation</option>
+          <option value="comms">Marketing &amp; Communications</option>
+          <option value="hr">People &amp; Culture</option>
+          <option value="finance">Finance &amp; Operations</option>
+        </select>
+      </div>
+      <div>
+        <div class="fl">OKR level</div>
+        <select id="level-sel">
+          <option>Individual</option>
+          <option>Team / Function</option>
+          <option>Organisation</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div id="objs-container"></div>
+  <button class="btn-add-obj" id="add-obj-btn" onclick="addObj()">
+    <span style="font-size:18px;line-height:1">+</span> Add another Objective
+  </button>
+  <p class="obj-limit" id="obj-limit" style="display:none">Maximum 3 Objectives reached (Nudge OKR guidelines)</p>
+  <button class="btn-primary" id="check-btn" onclick="checkAll()">
+    <span>✦</span><span id="check-lbl">Check OKR Quality</span>
+  </button>
+  <div id="results" class="results"></div>
+</div>
+
+<!-- SAMPLES -->
+<div id="tab-samples" style="display:none">
+  <div class="tscroll" id="pills"></div>
+  <div id="sample-content"></div>
+</div>
+
+<!-- GUIDE -->
+<div id="tab-guide" style="display:none">
+  <div class="gc">
+    <div class="gh">The SMART test — apply to every Key Result</div>
+    <div class="gb">
+      <div class="si">
+        <div class="si-item"><div class="sl">S</div><div class="sd"><strong>Specific</strong>Does it say exactly what will be done?</div></div>
+        <div class="si-item"><div class="sl">M</div><div class="sd"><strong>Measurable</strong>Does it have a number, % or target?</div></div>
+        <div class="si-item"><div class="sl">A</div><div class="sd"><strong>Ambitious but achievable</strong>Is it stretching but realistic?</div></div>
+        <div class="si-item"><div class="sl">T</div><div class="sd"><strong>Time-bound</strong>Does it have a clear deadline?</div></div>
+        <div class="si-item" style="grid-column:span 2"><div class="sl" style="background:#E1F5EE;color:#0F6E56">O</div><div class="sd"><strong>Outcome focused</strong>Is it a result — not just an activity or task?</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="gc">
+    <div class="gh">Score thresholds &amp; upload decision</div>
+    <div class="gb" style="padding:0">
+      <table class="gt">
+        <tr><td style="width:100px;font-weight:600;color:#3B6D11">90–100%</td><td style="color:#3B6D11">✅ Ready to upload to Keka immediately</td></tr>
+        <tr><td style="font-weight:600;color:#0F6E56">75–89%</td><td style="color:#0F6E56">👍 Minor tweaks recommended — then upload</td></tr>
+        <tr><td style="font-weight:600;color:#854F0B">60–74%</td><td style="color:#854F0B">⚠️ Revise before uploading to Keka</td></tr>
+        <tr><td style="font-weight:600;color:#993C1D">Below 60%</td><td style="color:#993C1D">🔴 Must be rewritten — do not upload as-is</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="gc">
+    <div class="gh">Common mistakes to avoid</div>
+    <div class="gb" style="padding:0">
+      <table class="gt">
+        <thead><tr><th>❌ Weak — avoid this</th><th>✅ Strong — aim for this</th></tr></thead>
+        <tbody>
+          <tr><td class="weak">Build team, get approvals, plan event</td><td class="good">Core team of 8 finalised, budget approved, date confirmed by Feb 28</td></tr>
+          <tr><td class="weak">Follow up with all stakeholders</td><td class="good">Bi-weekly check-ins with all 6 stakeholders, 100% tasks done by April 15</td></tr>
+          <tr><td class="weak">Improve programme quality</td><td class="good">Beneficiary satisfaction score improves from 72% to 85% by March 2026</td></tr>
+          <tr><td class="weak">Do training sessions</td><td class="good">200 field staff trained on data tools, 90% pass rate by December 2025</td></tr>
+          <tr><td class="weak">Complete onboarding process</td><td class="good">100% of new joiners complete 30-day onboarding, 85% satisfaction by Dec 2025</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="gc">
+    <div class="gh">OKR cascade — who writes first?</div>
+    <div class="gb" style="padding:0">
+      <table class="ct">
+        <tr><td style="width:52px"><div class="cstep">1</div></td><td><strong>Organisation-level OKRs</strong><br><span style="font-size:12px;color:#888">Set by leadership first — shared before teams write</span></td></tr>
+        <tr><td><div class="cstep">2</div></td><td><strong>Function / Team OKRs</strong><br><span style="font-size:12px;color:#888">Aligned to org OKRs</span></td></tr>
+        <tr><td><div class="cstep">3</div></td><td><strong>Individual OKRs</strong><br><span style="font-size:12px;color:#888">Aligned to team OKRs</span></td></tr>
+        <tr><td><div class="cstep" style="background:#EAF3DE;color:#3B6D11">4</div></td><td><strong>Submit to Keka</strong><br><span style="font-size:12px;color:#888">Only after checker score reaches 60%+</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+// ── State ──
+let objs = [newObj()];
+let sTeam = "eip";
+function newObj(){ return { id: Date.now()+Math.random(), obj:"", krs:["","",""] }; }
+function x(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ── Render objectives ──
+function render(){
+  const c = document.getElementById("objs-container");
+  c.innerHTML = objs.map((o,i) => `
+    <div class="obj-block">
+      <div class="obj-hdr">
+        <div class="obj-hdr-l">
+          <div class="obj-n">${i+1}</div>
+          <span class="obj-lbl">Objective ${i+1}</span>
+        </div>
+        ${objs.length>1?`<button class="btn-del-obj" onclick="removeObj(${i})">✕ Remove</button>`:""}
+      </div>
+      <div class="obj-body">
+        <div class="fl" style="margin-bottom:6px">Objective</div>
+        <textarea rows="2" id="obj-${i}" placeholder="e.g. Equip 2,000 youth with market-relevant skills leading to dignified employment by March 2026" style="margin-bottom:12px">${x(o.obj)}</textarea>
+        <div class="fl" style="margin-bottom:6px">Key Results (${o.krs.length}/5)</div>
+        ${o.krs.map((kr,j)=>`
+          <div class="kr-row">
+            <div class="kr-n${kr.trim()?" on":""}" id="krn-${i}-${j}">${j+1}</div>
+            <textarea rows="2" style="flex:1" id="kr-${i}-${j}" placeholder="KR${j+1}: Specific, measurable, with a clear number and deadline">${x(kr)}</textarea>
+            ${o.krs.length>2?`<button class="btn-del-kr" onclick="removeKR(${i},${j})">✕</button>`:""}
+          </div>`).join("")}
+        ${o.krs.length<5?`<button class="btn-add-kr" onclick="addKR(${i})">+ Add Key Result</button>`:""}
+      </div>
+    </div>`).join("");
+
+  objs.forEach((o,i)=>{
+    const ta = document.getElementById(`obj-${i}`);
+    if(ta) ta.addEventListener("input",function(){ objs[i].obj=this.value; });
+    o.krs.forEach((_,j)=>{
+      const kt = document.getElementById(`kr-${i}-${j}`);
+      if(kt) kt.addEventListener("input",function(){
+        objs[i].krs[j]=this.value;
+        const dot=document.getElementById(`krn-${i}-${j}`);
+        if(dot) dot.className="kr-n"+(this.value.trim()?" on":"");
+      });
+    });
+  });
+  const v=objs.filter(o=>o.obj.trim()&&o.krs.filter(k=>k.trim()).length>=2).length;
+  const lbl=document.getElementById("check-lbl");
+  if(lbl) lbl.textContent=v>1?`Check All ${v} Objectives`:"Check OKR Quality";
+  document.getElementById("add-obj-btn").style.display=objs.length>=3?"none":"flex";
+  document.getElementById("obj-limit").style.display=objs.length>=3?"block":"none";
+}
+
+function addObj(){ if(objs.length<3){ objs.push(newObj()); render(); } }
+function removeObj(i){ objs.splice(i,1); render(); }
+function addKR(i){ if(objs[i].krs.length<5){ objs[i].krs.push(""); render(); } }
+function removeKR(i,j){ if(objs[i].krs.length>2){ objs[i].krs.splice(j,1); render(); } }
+
+// ── Colours ──
+function sColor(s){ return s>=90?"#3B6D11":s>=75?"#0F6E56":s>=60?"#854F0B":"#993C1D"; }
+function sBg(s){ return s>=90?"#EAF3DE":s>=75?"#E1F5EE":s>=60?"#FAEEDA":"#FAECE7"; }
+function vClass(v){ return {"Ready to upload":"v-up","Minor revisions needed":"v-mn","Needs revision":"v-rv"}[v]||"v-rw"; }
+function dColor(s,m){ const p=(s/m)*100; return p>=80?"#3B6D11":p>=60?"#0F6E56":p>=40?"#BA7517":"#D85A30"; }
+
+// ── Demo response generator ──
+function demoEvaluate(obj, krs, teamLabel){
+  const filled = krs.filter(k=>k.trim());
+  const objText = obj.trim();
+
+  // Score heuristics based on content quality signals
+  let baseScore = 55;
+  const hasNumbers = filled.filter(k=>/\d+/.test(k)).length;
+  const hasDates = filled.filter(k=>/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|2025|2026|q1|q2|q3|q4/i.test(k)).length;
+  const hasPercent = filled.filter(k=>/%/.test(k)).length;
+  const hasRupee = filled.filter(k=>/₹|crore|lakh/i.test(k)).length;
+  const objHasVerb = /^(build|achieve|strengthen|establish|launch|grow|improve|deliver|expand|develop|create|drive|enable|ensure|reduce|increase)/i.test(objText);
+
+  baseScore += Math.min(hasNumbers,3)*6;
+  baseScore += Math.min(hasDates,3)*5;
+  baseScore += hasPercent*4;
+  baseScore += hasRupee*3;
+  if(objHasVerb) baseScore += 5;
+  if(objText.length > 60) baseScore += 3;
+  baseScore = Math.min(97, Math.max(38, baseScore));
+  baseScore = Math.round(baseScore);
+
+  const verdict = baseScore>=90?"Ready to upload":baseScore>=75?"Minor revisions needed":baseScore>=60?"Needs revision":"Needs rework";
+
+  // Dimension scores out of 20 each
+  const specific = Math.round(Math.min(20, 10 + hasNumbers*2.5 + (objText.length>50?2:0)));
+  const measurable = Math.round(Math.min(20, 8 + hasNumbers*3 + hasPercent*2 + hasRupee*2));
+  const ambitious = Math.round(Math.min(20, 12 + (hasNumbers>1?3:0) + (objHasVerb?3:0)));
+  const time_bound = Math.round(Math.min(20, 6 + hasDates*4));
+  const outcome_focused = Math.round(Math.min(20, 10 + hasPercent*2 + (baseScore>70?4:0)));
+
+  // KR feedback
+  const kr_feedback = filled.map((kr,i)=>{
+    let ks = 50;
+    if(/\d+/.test(kr)) ks+=15;
+    if(/%/.test(kr)) ks+=10;
+    if(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|2025|2026/i.test(kr)) ks+=15;
+    if(/₹|crore|lakh/i.test(kr)) ks+=8;
+    ks = Math.min(98, Math.max(32, ks+Math.round(Math.random()*8-4)));
+    let fb;
+    if(ks>=85) fb=`Strong KR — clearly measurable with a specific target and deadline that makes progress easy to track.`;
+    else if(ks>=70) fb=`Good direction but could be stronger — consider adding a specific number or % target to make it fully measurable.`;
+    else if(ks>=55) fb=`Missing either a measurable target or a deadline — both are needed for a KR to be trackable.`;
+    else fb=`This reads more like a task than a result. Try rewriting it to describe what you will achieve, not just what you will do.`;
+    return {kr:i+1, score:ks, feedback:fb};
+  });
+
+  // Contextual strengths and improvements
+  const strengths = [];
+  const improvements = [];
+
+  if(objHasVerb) strengths.push(`The Objective starts with a strong action verb and clearly communicates intent — it's inspiring and direction-setting.`);
+  if(hasNumbers>=2) strengths.push(`Multiple Key Results include specific numerical targets, making progress measurable and trackable throughout the cycle.`);
+  if(hasDates>=2) strengths.push(`Strong use of deadlines across Key Results — this creates accountability and makes check-ins meaningful.`);
+  if(hasPercent>=1) strengths.push(`Using percentage-based targets is a good practice — it shows improvement relative to a baseline, not just an absolute number.`);
+  if(strengths.length===0) strengths.push(`The Objective is clear and understandable — a good starting point to build from.`);
+
+  if(hasDates < filled.length) improvements.push(`Add a specific deadline (month + year) to every Key Result — ${filled.length - hasDates} KR(s) are currently missing one.`);
+  if(hasNumbers < filled.length) improvements.push(`At least one Key Result lacks a measurable number. Add a concrete target — a count, percentage, or rupee figure.`);
+  if(filled.length < 3) improvements.push(`You have only ${filled.length} Key Result(s). Aim for 3–5 to ensure your Objective is fully covered and not dependent on a single measure.`);
+  if(!objHasVerb) improvements.push(`Consider starting the Objective with a stronger action verb (e.g. "Build", "Achieve", "Establish") to make it more inspiring and action-oriented.`);
+  if(improvements.length===0) improvements.push(`Ensure your Key Results connect directly to outcomes that matter for your programme beneficiaries or function, not just activities completed.`);
+
+  // Revised example for weakest KR
+  const weakest = kr_feedback.sort((a,b)=>a.score-b.score)[0];
+  const weakKR = filled[weakest.kr-1]||"";
+  let revised_example = "";
+  if(weakest.score < 75 && weakKR){
+    revised_example = `Instead of "${weakKR.slice(0,60)}${weakKR.length>60?"...":""}" — try: "Achieve [specific target with a number or %] for [scope] by [Month Year]" — make sure the result describes an outcome that can be verified, not just a task completed.`;
+  }
+
+  return { score:baseScore, verdict, dimensions:{specific,measurable,ambitious,time_bound,outcome_focused}, strengths, improvements, kr_feedback, revised_example };
+}
+
+// ── Check ──
+async function checkAll(){
+  const valid = objs.filter(o=>o.obj.trim()&&o.krs.filter(k=>k.trim()).length>=2);
+  if(!valid.length) return;
+  const teamSel = document.getElementById("team-sel");
+  const teamLabel = teamSel.options[teamSel.selectedIndex].text;
+  const btn = document.getElementById("check-btn");
+  btn.disabled = true;
+  document.getElementById("results").innerHTML="";
+
+  const results = [];
+  for(let i=0;i<valid.length;i++){
+    btn.innerHTML=`<div class="spin"></div><span>Evaluating ${i+1} of ${valid.length}…</span>`;
+    await new Promise(r=>setTimeout(r,1400+Math.random()*600)); // realistic delay
+    const o = valid[i];
+    const r = demoEvaluate(o.obj, o.krs, teamLabel);
+    results.push({o,r});
+  }
+
+  btn.disabled=false;
+  btn.innerHTML=`<span>✦</span><span id="check-lbl">${valid.length>1?`Check All ${valid.length} Objectives`:"Check OKR Quality"}</span>`;
+
+  const avg=Math.round(results.reduce((s,r)=>s+r.r.score,0)/results.length);
+  let html="";
+
+  if(results.length>1){
+    const av=avg>=90?"Ready to upload":avg>=75?"Minor revisions needed":avg>=60?"Needs revision":"Needs rework";
+    html+=`<div class="sum-row">
+      <div class="sc"><div class="sc-n" style="color:${sColor(avg)}">${avg}%</div><div class="sc-l">Average score</div></div>
+      <div class="sc"><div class="sc-n">${results.length}</div><div class="sc-l">Objectives reviewed</div></div>
+      <div class="sc"><div class="sc-n" style="color:${sColor(75)}">${results.filter(r=>r.r.score>=75).length}</div><div class="sc-l">Passed 75%+</div></div>
+    </div>
+    <div style="background:${sBg(avg)};border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;color:${sColor(avg)};margin-bottom:14px">
+      Overall verdict: ${av}
+    </div>`;
+  }
+
+  results.forEach(({o,r},idx)=>{
+    const d=r.dimensions||{};
+    const kf=r.kr_feedback||[];
+    html+=`<div class="res-block">
+      <div class="res-hdr">
+        <div class="score-col">
+          <div class="score-circle" style="background:${sBg(r.score)};color:${sColor(r.score)}">${r.score}%</div>
+          <span class="vp ${vClass(r.verdict)}">${r.verdict}</span>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Objective ${idx+1}</div>
+          <div style="font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.5">${x(o.obj)}</div>
+        </div>
+      </div>
+      <div class="res-body">
+        <div class="sec-hd">SMART scorecard</div>
+        <div class="sg">
+          ${[["specific","Specific (S)",20],["measurable","Measurable (M)",20],["ambitious","Ambitious (A)",20],["time_bound","Time-bound (T)",20],["outcome_focused","Outcome-focused (O)",20]].map(([k,l,m])=>{
+            const sv=d[k]||0,c=dColor(sv,m);
+            return`<div class="dr"><span class="dl">${l}</span><div class="dbg"><div class="db" style="width:${(sv/m)*100}%;background:${c}"></div></div><span class="ds" style="color:${c}">${sv}/${m}</span></div>`;
+          }).join("")}
+        </div>
+        ${kf.length?`
+        <div class="divl"></div>
+        <div class="sec-hd">Key Result breakdown</div>
+        ${kf.map(f=>`<div class="kr-card">
+          <div class="kr-sc" style="background:${sBg(f.score)};color:${sColor(f.score)}">${f.score}%</div>
+          <div><div class="kr-lbl">KR ${f.kr}</div><div class="kr-txt">${x(f.feedback||"")}</div></div>
+        </div>`).join("")}`:""}
+        <div class="divl"></div>
+        ${r.strengths?.length?`<div class="sec-hd" style="margin-bottom:6px">Strengths</div>
+        <ul class="fb-list" style="margin-bottom:12px">
+          ${r.strengths.map(s=>`<li><div class="fi fi-ok">✓</div>${x(s)}</li>`).join("")}
+        </ul>`:""}
+        ${r.improvements?.length?`<div class="sec-hd" style="margin-bottom:6px">Points to improve</div>
+        <ul class="fb-list" style="margin-bottom:12px">
+          ${r.improvements.map(s=>`<li><div class="fi fi-w">!</div>${x(s)}</li>`).join("")}
+        </ul>`:""}
+        ${r.revised_example?`<div class="imp"><strong>💡 Suggested revision of weakest KR:</strong> ${x(r.revised_example)}</div>`:""}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById("results").innerHTML=html;
+}
+
+// ── Samples ──
+const TEAMS=[{id:"eip",label:"Economic Inclusion Program (EIP)"},{id:"asha",label:"Asha Kiran"},{id:"skilling",label:"Centre for Skill Development & Entrepreneurship"},{id:"incubator",label:"Social Entrepreneurship — Incubator & Accelerator"},{id:"iaf",label:"Indian Administrative Fellowship (IAF)"},{id:"fundraising",label:"Fundraising & Partnerships"},{id:"tech",label:"Technology, Data & Insights"},{id:"impact",label:"Impact & Evaluation"},{id:"comms",label:"Marketing & Communications"},{id:"hr",label:"People & Culture"},{id:"finance",label:"Finance & Operations"}];
+const SAMPLES={
+eip:[{obj:"Successfully enroll and onboard 2,000 ultra-poor households in Gumla district by March 2026",krs:["Complete participatory identification of 2,000 eligible households using PPI scorecard across all 40 target villages by Jan 2026","Ensure 90% of enrolled households have an active SHG linkage and a bank account opened by Feb 2026","Achieve 85% attendance in the first two months of weekly changemaker mentoring sessions across enrolled households by March 2026"]},{obj:"Strengthen livelihood adoption and income stabilization for 1,500 graduation-stage households in Jharkhand",krs:["80% of households in the livelihood phase adopt their chosen enterprise with documented asset transfer by June 2026","Average monthly household income crosses ₹4,500 for 70% of households at the 6-month check-in by Sep 2026","Reduce programme dropout rate to below 8% by sustaining bi-weekly household visits through the livelihood phase"]},{obj:"Build SRLM partner capability to independently run the graduation programme in Assam",krs:["Train 60 ASRLM block-level staff on graduation approach protocols and mentoring techniques by Feb 2026","ASRLM staff independently verify 500 households with less than 5% error rate, validated by Nudge team, by March 2026","ASRLM submits monthly MIS reports on time with 95% data completeness for 3 consecutive months by June 2026"]}],
+asha:[{obj:"Build sustainable backyard livelihoods for 3,500 rural women through goatery and poultry by March 2026",krs:["Enrol 3,500 rural women into the Asha Kiran programme across target districts by December 2025","75% of enrolled women report a minimum 30% increase in monthly household income within 12 months of joining","Establish functioning market linkages for poultry and goat produce in 10 cluster districts by January 2026"]},{obj:"Develop a replicable dairy livelihood model ready for government handoff by June 2026",krs:["Document complete SOPs for dairy enterprise setup including vendor linkages, vet contacts, and feed sourcing for 3 districts by Feb 2026","Pilot the dairy model with 200 households and capture per-household income, cost, and dropout data monthly through June 2026","Average monthly dairy income for pilot households reaches ₹3,000 with 75% household retention by June 2026"]},{obj:"Validate the backyard poultry model for scale across 5 states with a go-to-market playbook",krs:["Consolidate learnings from Jharkhand and West Bengal pilots into a playbook with costings and risk mitigation by March 2026","Field-test the playbook with 150 fresh households in Tripura and validate flock survival rate at 80%+ by June 2026","Get sign-off from 2 state programme heads confirming the playbook is ready for independent use by Aug 2026"]}],
+skilling:[{obj:"Equip 2,000 underserved youth with market-relevant skills that lead to dignified employment by March 2026",krs:["Train 2,000 youth across 6 skilling verticals by December 2025","Achieve a 70% placement rate within 60 days of course completion by March 2026","Retain 80% of placed youth in their jobs for a minimum of 6 months by March 2026"]},{obj:"Improve 6-month job retention for placed youth from 45% to 65%",krs:["Set up post-placement support with monthly check-in calls and an employer grievance hotline by Feb 2026","Identify root causes of early dropout via interviews with 50 youth who left within 3 months by March 2026","65% of youth placed in Q1 2026 are still employed at 6 months, tracked via employer verification, by Sep 2026"]},{obj:"Launch a green-skills programme in partnership with 3 state governments by December 2026",krs:["Complete curriculum for solar technician and drip-irrigation installer courses with NSDC and 2 institutes by April 2026","Pilot with 200 youth in Karnataka with government funding covering 70%+ of cost by Aug 2026","Sign MoUs with Karnataka, Rajasthan, and Jharkhand to mainstream green-skills into annual training calendars by Dec 2026"]}],
+incubator:[{obj:"Back India's highest-potential livelihood social entrepreneurs and accelerate their impact by March 2026",krs:["Disburse grants to 20 early-stage nonprofits through the Incubator with an average grant of ₹20L by December 2025","Support 10 growth-stage nonprofits through the Accelerator with grants up to ₹2Cr by January 2026","Achieve a portfolio-wide 7X grant multiplier by March 2026"]},{obj:"Recruit a high-quality Cohort 6 of enterprises working on rural livelihoods",krs:["Reach 500 applications through outreach to 20 ecosystem partners and alumni referrals by March 2026","Complete 3-stage selection for top 60 applicants by April 2026","Onboard 18 enterprises with 40%+ women-led and 60%+ rural-focused ventures by May 2026"]},{obj:"Build The/Nudge Incubator's reputation as the top launchpad for livelihood social enterprises",krs:["Secure coverage in 5 leading publications about Cohort 5 outcomes by June 2026","Achieve a Net Promoter Score of 75+ from Cohort 5 founders at programme exit","Attract 3 new corporate or foundation partners co-funding the incubator, adding ₹2Cr+ to the budget by Dec 2026"]}],
+iaf:[{obj:"Place high-calibre corporate leaders in government to drive systemic livelihood policy change by March 2026",krs:["Select and onboard 25 IAF Fellows across 8 government ministries by September 2025","Ensure 80% of Fellows complete their 18-month placement with a documented policy or implementation outcome","Secure funding commitments for the next IAF cohort from 5 corporate partners by December 2025"]},{obj:"Strengthen the IAF fellowship experience to maximise Fellows' policy impact during placement",krs:["Conduct monthly cohort learning sessions with external policy practitioners for all 25 Fellows by Dec 2025","80% of Fellows report the fellowship substantially improved their understanding of government systems by Sep 2025","At least 15 Fellows document a measurable policy output in their final impact report by March 2026"]},{obj:"Build a pipeline of government ministries eager to host the next IAF cohort",krs:["Conduct structured debrief sessions with all 8 hosting ministries and capture formal feedback by Dec 2025","Secure hosting commitments from 10 ministries for the next cohort by Feb 2026","3 of 8 hosting ministries proactively request an additional Fellow for next cycle by March 2026"]}],
+fundraising:[{obj:"Build a diversified, sustainable funding base to support The/Nudge's 5-year mission by March 2026",krs:["Raise ₹50Cr in unrestricted and programme funding from domestic and international donors by March 2026","Onboard 8 new institutional funders (foundations, corporates, multilaterals) by January 2026","Renew 90% of existing multi-year donor commitments falling due in FY2025–26 by December 2025"]},{obj:"Grow unrestricted philanthropy from individual donors from ₹3Cr to ₹5Cr by March 2026",krs:["Launch a structured mid-level donor programme targeting HNIs, with 20 cultivation meetings by Feb 2026","Run 2 impact-led fundraising campaigns generating ₹1.5Cr combined by March 2026","Convert 30% of existing one-time donors into recurring donors through a re-engagement journey by March 2026"]},{obj:"Strengthen the donor and partner experience through better impact communication",krs:["Publish quarterly impact updates for all 12 active donors with programme data and field stories starting Feb 2026","Produce 6 video impact stories from programme households for donor and social media channels by June 2026","Achieve 80%+ satisfaction from donors in the annual partner survey on communication and impact reporting"]}],
+tech:[{obj:"Build data infrastructure that enables real-time programme monitoring and evidence-based decisions by March 2026",krs:["Deploy a unified programme data dashboard accessible to all programme leads by October 2025","Achieve 90% data completeness and accuracy across EIP and Asha Kiran field data by December 2025","Reduce manual data entry effort for field teams by 40% through mobile-first data collection tools by January 2026"]},{obj:"Ship a field-ready beneficiary tracking app that SRLM partners use without Nudge support",krs:["Complete 30 usability sessions with field staff in Assam and Jharkhand and action top friction points by Jan 2026","Launch stable v1.0 with offline-first capability and household visit logging by March 2026","5 SRLM block teams use the app independently for 60 days with zero escalations by June 2026"]},{obj:"Reduce the MIS team's manual reconciliation burden by 70%",krs:["Audit all manual workflows and prioritise the 5 highest-effort processes for automation by Jan 2026","Automate household enrolment deduplication, monthly MIS consolidation, and state report generation by April 2026","MIS team spends under 3 hours per week on data reconciliation, down from 10+ hours, by June 2026"]}],
+impact:[{obj:"Generate rigorous evidence that strengthens programmes and influences national livelihood policy by March 2026",krs:["Complete independent third-party evaluations for EIP and Asha Kiran with published reports by January 2026","Present 3 evidence-based policy briefs to central or state government stakeholders by February 2026","Achieve citation of The/Nudge's impact evidence in at least 2 national government policy documents by March 2026"]},{obj:"Create an evidence repository that programme and government teams use independently",krs:["Consolidate findings from 4 state pilots into a searchable library with plain-language summaries by March 2026","Launch state-specific evidence briefs in local languages for SRLM audiences in 4 states by June 2026","At least 3 programme or government teams independently cite the library in proposals or policy notes by Sep 2026"]},{obj:"Improve real-time field data quality to enable faster programme decision-making",krs:["Reduce data lag from field survey to dashboard from 14 days to under 3 days by Feb 2026","Train 80 field staff across 4 states on revised data protocol with post-training scores averaging 80%+ by March 2026","Data completeness across all MIS fields reaches 95% for 3 consecutive months by June 2026"]}],
+comms:[{obj:"Strengthen The/Nudge brand as India's leading livelihood institute to attract talent, donors, and partners",krs:["Grow organic social media reach by 40% across LinkedIn, Instagram, and X by December 2025","Secure 12 media features in Tier 1 publications (Economic Times, The Hindu, Mint) by January 2026","Publish 24 impact stories across digital channels demonstrating beneficiary outcomes by March 2026"]},{obj:"Establish The/Nudge as the most cited voice on poverty graduation in Indian media by Dec 2026",krs:["Secure 20 editorial placements in tier-1 national media with at least 8 authored by Nudge leadership by June 2026","Brief 3 national journalists covering poverty or rural development for in-depth graduation features by March 2026","Track a 40% increase in media mentions for 'The/Nudge' and 'graduation approach' by Dec 2026"]},{obj:"Strengthen the donor and partner experience through better impact communication",krs:["Publish quarterly impact updates for all 12 active donors with programme data and field stories starting Feb 2026","Produce 6 video impact stories from graduation households for donor and social media channels by June 2026","Achieve 80%+ satisfaction from donors in the annual partner survey on communication and impact reporting"]}],
+hr:[{obj:"Build a high-performing, engaged Nudgester community that thrives with purpose by March 2026",krs:["Achieve an employee engagement score of 80% or above in the bi-annual survey by December 2025","Reduce voluntary attrition from 18% to 12% through targeted retention initiatives by March 2026","Complete individual development plans for 100% of Nudgesters by November 2025"]},{obj:"Strengthen onboarding so every new Nudgester is mission-ready within 30 days of joining",krs:["Design and launch a structured 30-day onboarding journey for all new hires by August 2025","Achieve an onboarding satisfaction score of 85% or above across all new joiners by December 2025","Reduce average time-to-productivity for new hires from 60 to 35 days by March 2026"]},{obj:"Bring voluntary attrition down from 22% to under 14% by improving the first-year experience",krs:["Launch a 90-day onboarding programme with buddy assignment, Day 30/60 check-ins, and a field visit by March 2026","Survey all first-year employees who resign to identify top attrition drivers and share with leadership by June 2026","Voluntary attrition for first-year employees drops from 28% to under 18% by Dec 2026"]}],
+finance:[{obj:"Ensure financial health, compliance, and operational efficiency across all programmes by March 2026",krs:["Achieve zero statutory compliance gaps across PF, PT, ESI, and TDS filings for FY2025–26 by March 2026","Reduce month-end financial close time from 15 days to 7 days through automation by November 2025","Complete internal audits for all programme budgets above ₹1Cr with zero critical findings by January 2026"]},{obj:"Achieve 90%+ budget utilization across all active grants by end of FY26",krs:["Implement monthly budget-vs-actual reviews for all 8 active grants with programme leads owning variance by Jan 2026","Resolve the top 5 underspend bottlenecks by March 2026","At least 6 of 8 grants achieve 90%+ utilization by March 31, 2026, with no grant below 80%"]},{obj:"Improve financial reporting turnaround to support faster programme and leadership decisions",krs:["Publish monthly MIS reports within 5 working days of month-end close, down from 12 days, by Feb 2026","Migrate 3 manual reporting workflows to automated templates by April 2026","100% of donor financial reports submitted on or before deadline across all grants, tracked quarterly through Dec 2026"]}]
+};
+
+function buildSamples(id){
+  sTeam=id;
+  const sets=SAMPLES[id]||[];
+  document.getElementById("sample-content").innerHTML=sets.map((s,i)=>`
+    <div class="sset">
+      <div class="sset-hdr"><div class="sn">${i+1}</div><div><div class="sol">Objective</div><div class="sot">${x(s.obj)}</div></div></div>
+      ${s.krs.map((kr,j)=>`<div class="ski"><div class="skd"></div><span class="skt"><strong>KR${j+1}:</strong> ${x(kr)}</span></div>`).join("")}
+    </div>`).join("");
+  document.querySelectorAll(".tpill").forEach(p=>p.classList.toggle("on",p.dataset.t===id));
+}
+function buildPills(){
+  document.getElementById("pills").innerHTML=TEAMS.map(t=>`<button class="tpill${t.id===sTeam?" on":""}" data-t="${t.id}" onclick="buildSamples('${t.id}')">${x(t.label)}</button>`).join("");
+}
+function showTab(id,btn){
+  ["checker","samples","guide"].forEach(t=>document.getElementById("tab-"+t).style.display=t===id?"":"none");
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  btn.classList.add("active");
+  if(id==="samples"){buildPills();buildSamples(sTeam);}
+}
+render();
+</script>
+</body>
+</html>
