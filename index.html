@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>The/Nudge OKR Checker — Demo</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:#F7F5F2;color:#1a1a1a;min-height:100vh}
@@ -24,6 +25,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F5F2;color:#1a1a1a;min-heigh
 .card{background:#fff;border:1px solid #EAE7E2;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.field-hint{font-size:11px;color:#aaa;margin-top:5px;line-height:1.4}
 select{width:100%;padding:9px 12px;border:1px solid #DDD8D0;border-radius:8px;background:#fff;color:#1a1a1a;font-size:14px;font-family:inherit}
 select:focus{outline:none;border-color:#D85A30}
 textarea{width:100%;padding:9px 12px;border:1px solid #DDD8D0;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;font-family:inherit;resize:vertical;line-height:1.6}
@@ -47,16 +49,25 @@ textarea:focus{outline:none;border-color:#D85A30}
 .btn-add-obj{width:100%;background:none;border:1.5px dashed #DDD8D0;border-radius:12px;padding:11px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:1rem}
 .btn-add-obj:hover{border-color:#D85A30;color:#D85A30}
 .obj-limit{font-size:12px;color:#aaa;margin-bottom:.75rem;text-align:center}
+.kr-warning{display:none;align-items:center;gap:7px;background:#FAEEDA;border:1px solid #F0D4A0;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:12px;color:#854F0B;line-height:1.5}
+.kr-warning.show{display:flex}
 .btn-primary{background:#D85A30;color:#fff;border:none;border-radius:9px;padding:11px 28px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px}
 .btn-primary:hover{background:#b84b25}
 .btn-primary:disabled{background:#C8C3BB;cursor:not-allowed}
+.btn-excel{background:#1D6F42;color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+.btn-excel:hover{background:#155233}
+.btn-okr-sheet{background:#185FA5;color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+.btn-okr-sheet:hover{background:#0d4278}
 .spin{width:17px;height:17px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
 @keyframes sp{to{transform:rotate(360deg)}}
 .results{margin-top:1.25rem}
+.results-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.results-title{font-size:13px;font-weight:600;color:#333}
 .sum-row{display:flex;gap:10px;margin-bottom:14px}
 .sc{flex:1;background:#fff;border:1px solid #EAE7E2;border-radius:10px;padding:12px 14px;text-align:center}
 .sc-n{font-size:24px;font-weight:700}
 .sc-l{font-size:11px;color:#888;margin-top:3px}
+.verdict-banner{border-radius:8px;padding:11px 16px;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .res-block{background:#fff;border:1px solid #EAE7E2;border-radius:12px;margin-bottom:14px;overflow:hidden}
 .res-hdr{padding:14px 16px;background:#F9F8F6;border-bottom:1px solid #EAE7E2;display:flex;align-items:flex-start;gap:14px}
 .score-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
@@ -68,29 +79,113 @@ textarea:focus{outline:none;border-color:#D85A30}
 .v-rw{background:#FAECE7;color:#993C1D}
 .res-body{padding:14px 16px}
 .sec-hd{font-size:12px;font-weight:600;color:#333;margin-bottom:8px}
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:14px}
 .dr{display:flex;align-items:center;gap:8px}
-.dl{font-size:12px;color:#666;width:140px;flex-shrink:0}
-.dbg{flex:1;height:5px;background:#F0EDE8;border-radius:3px;overflow:hidden}
+.dl{font-size:12px;color:#555;width:160px;flex-shrink:0}
+.dbg{flex:1;height:6px;background:#F0EDE8;border-radius:3px;overflow:hidden}
 .db{height:100%;border-radius:3px}
 .ds{font-size:12px;font-weight:700;width:38px;text-align:right}
-.divl{height:1px;background:#EAE7E2;margin:14px 0}
+.divl{height:1px;background:#EAE7E2;margin:12px 0}
 .kr-card{background:#F9F8F6;border-radius:8px;padding:9px 12px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start}
 .kr-sc{width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .kr-lbl{font-size:11px;font-weight:600;color:#888;margin-bottom:2px}
 .kr-txt{font-size:12px;color:#555;line-height:1.5}
+.kr-rewrite{background:#F0FAF0;border:1px solid #C3E6CB;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:12px;color:#1a4d28;line-height:1.5}
+.kr-rewrite-lbl{font-size:10px;font-weight:600;color:#3B6D11;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+/* ── Bulk upload panel ── */
+.bulk-trigger-row{display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px}
+.btn-bulk{background:none;border:1.5px solid #DDD8D0;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:500;color:#555;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+.btn-bulk:hover{border-color:#D85A30;color:#D85A30}
+.bulk-panel{background:#fff;border:1px solid #EAE7E2;border-radius:12px;margin-bottom:1rem;overflow:hidden;display:none}
+.bulk-panel.open{display:block}
+.bulk-panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#F9F8F6;border-bottom:1px solid #EAE7E2}
+.bulk-panel-title{font-size:13px;font-weight:600;color:#333;display:flex;align-items:center;gap:7px}
+.bulk-close{background:none;border:none;color:#888;cursor:pointer;font-size:18px;line-height:1;padding:2px}
+.bulk-close:hover{color:#D85A30}
+.bulk-tabs{display:flex;border-bottom:1px solid #EAE7E2}
+.bulk-tab{padding:8px 16px;font-size:13px;background:none;border:none;border-bottom:2px solid transparent;color:#888;cursor:pointer;font-family:inherit;margin-bottom:-1px}
+.bulk-tab.active{color:#D85A30;border-bottom-color:#D85A30;font-weight:500}
+.bulk-body{padding:14px}
+.bulk-format{background:#F9F8F6;border-radius:8px;padding:9px 13px;font-size:12px;color:#666;line-height:1.7;margin-bottom:12px;font-family:monospace}
+.bulk-format strong{font-family:'DM Sans',sans-serif;color:#333;font-size:11px;font-weight:600;display:block;margin-bottom:4px;font-family:inherit}
+.bulk-drop{border:2px dashed #DDD8D0;border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .2s}
+.bulk-drop:hover,.bulk-drop.over{border-color:#D85A30;background:#FFF5F2}
+.bulk-drop-icon{font-size:28px;margin-bottom:8px}
+.bulk-drop p{font-size:13px;color:#666;margin-bottom:6px}
+.bulk-drop span{font-size:12px;color:#aaa}
+.bulk-file-input{display:none}
+.bulk-paste-area{width:100%;height:140px;padding:10px 12px;border:1px solid #DDD8D0;border-radius:8px;font-size:12px;font-family:monospace;color:#333;resize:vertical;line-height:1.6}
+.bulk-paste-area:focus{outline:none;border-color:#D85A30}
+.bulk-actions{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn-bulk-import{background:#D85A30;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-bulk-import:hover{background:#b84b25}
+.btn-bulk-template{background:none;border:1px solid #DDD8D0;border-radius:8px;padding:8px 16px;font-size:12px;color:#666;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px}
+.btn-bulk-template:hover{border-color:#1D6F42;color:#1D6F42}
+.bulk-msg{font-size:12px;margin-top:8px;padding:7px 11px;border-radius:6px;display:none}
+.bulk-msg.ok{background:#EAF3DE;color:#3B6D11;display:block}
+.bulk-msg.err{background:#FAECE7;color:#993C1D;display:block}
+.rec-box{border-radius:9px;padding:12px 14px;margin-top:12px}
+.rec-box-title{font-size:12px;font-weight:600;margin-bottom:6px}
 .fb-list{list-style:none}
-.fb-list li{font-size:12px;color:#555;padding:5px 0;border-bottom:1px solid #F0EDE8;display:flex;gap:7px;align-items:flex-start;line-height:1.55}
+.fb-list li{font-size:12px;color:#444;padding:5px 0;border-bottom:1px solid #F0EDE8;display:flex;gap:7px;align-items:flex-start;line-height:1.55}
 .fb-list li:last-child{border-bottom:none}
-.fi{width:16px;height:16px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+.fi{width:16px;height:16px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:1px}
 .fi-ok{background:#EAF3DE;color:#3B6D11}
-.fi-w{background:#FAEEDA;color:#854F0B}
-.imp{background:#EEF5FC;border-radius:8px;padding:10px 14px;font-size:12px;color:#1a4d7a;line-height:1.6}
+.fi-w{background:#FAECE7;color:#993C1D}
+.imp{background:#EEF5FC;border-radius:8px;padding:10px 14px;font-size:12px;color:#1a4d7a;line-height:1.6;margin-top:10px;border-left:3px solid #185FA5}
+/* ── Cascade alignment section ── */
+.cascade-wrap{margin-bottom:1rem}
+.cascade-toggle-btn{width:100%;background:#fff;border:1.5px solid #B5D4F4;border-radius:12px;padding:11px 16px;font-size:13px;font-weight:500;color:#185FA5;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left}
+.cascade-toggle-btn:hover{background:#EEF5FC;border-color:#185FA5}
+.cascade-toggle-btn.open{border-radius:12px 12px 0 0;border-bottom-color:transparent}
+.cascade-toggle-icon{font-size:18px;line-height:1;transition:transform .2s}
+.cascade-toggle-btn.open .cascade-toggle-icon{transform:rotate(45deg)}
+.cascade-opt{font-size:11px;font-weight:400;background:#E6F1FB;color:#185FA5;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.cascade-body{background:#EEF5FC;border:1.5px solid #B5D4F4;border-top:none;border-radius:0 0 12px 12px;padding:14px;display:none}
+.cascade-body.open{display:block}
+.cascade-hint{font-size:12px;color:#185FA5;margin-bottom:12px;line-height:1.5;display:flex;gap:7px;align-items:flex-start}
+.team-obj-block{background:#fff;border:1px solid #B5D4F4;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.team-obj-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#E6F1FB;border-bottom:1px solid #B5D4F4}
+.team-obj-hdr-l{display:flex;align-items:center;gap:8px}
+.team-obj-n{width:22px;height:22px;border-radius:50%;background:#185FA5;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.team-obj-lbl{font-size:12px;font-weight:600;color:#185FA5}
+.btn-del-team-obj{background:none;border:1px solid #B5D4F4;color:#185FA5;cursor:pointer;font-size:11px;font-family:inherit;padding:3px 8px;border-radius:5px}
+.btn-del-team-obj:hover{background:#185FA5;color:#fff}
+.team-obj-body{padding:12px 13px}
+.team-kr-row{display:flex;gap:7px;margin-bottom:6px;align-items:flex-start}
+.team-kr-n{width:20px;height:20px;border-radius:50%;background:#E6F1FB;font-size:10px;font-weight:600;color:#185FA5;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:10px}
+.btn-del-team-kr{background:none;border:none;color:#aaa;cursor:pointer;padding:3px;border-radius:3px;margin-top:9px;font-size:13px;line-height:1;flex-shrink:0}
+.btn-del-team-kr:hover{color:#993C1D}
+.btn-add-team-kr{background:none;border:1px dashed #B5D4F4;border-radius:7px;padding:5px 12px;font-size:11px;color:#185FA5;cursor:pointer;font-family:inherit;margin-top:3px;display:block}
+.btn-add-team-kr:hover{background:#E6F1FB}
+.btn-add-team-obj{background:none;border:1px dashed #B5D4F4;border-radius:9px;padding:8px;font-size:12px;color:#185FA5;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;width:100%;margin-top:4px}
+.btn-add-team-obj:hover{background:#E6F1FB}
+/* ── Alignment result in results panel ── */
+.align-block{background:#EEF5FC;border:1px solid #B5D4F4;border-radius:9px;padding:12px 14px;margin-bottom:10px}
+.align-hd{font-size:12px;font-weight:600;color:#185FA5;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.align-score-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.align-score-pill{font-size:14px;font-weight:700;padding:4px 12px;border-radius:20px;flex-shrink:0}
+.align-bar-bg{flex:1;height:7px;background:#C9DEFA;border-radius:4px;overflow:hidden}
+.align-bar{height:100%;border-radius:4px;background:#185FA5;transition:width .6s ease}
+.align-matched-obj{font-size:12px;color:#185FA5;background:#fff;border:1px solid #B5D4F4;border-radius:7px;padding:7px 10px;margin-bottom:8px;line-height:1.5}
+.align-matched-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#185FA5;opacity:.7;margin-bottom:3px}
+.align-gaps{font-size:12px;color:#555;line-height:1.5}
+.align-gap-item{display:flex;gap:6px;align-items:flex-start;padding:4px 0;border-bottom:1px solid #D4E8FA}
+.align-gap-item:last-child{border-bottom:none}
+/* ── Recommended KRs ── */
+.rec-kr-block{background:#F0FAF0;border:1px solid #C3E6CB;border-radius:9px;padding:12px 14px;margin-top:10px}
+.rec-kr-hd{font-size:12px;font-weight:600;color:#3B6D11;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rec-kr-item{background:#fff;border:1px solid #C3E6CB;border-radius:7px;padding:8px 11px;margin-bottom:7px;display:flex;gap:8px;align-items:flex-start}
+.rec-kr-item:last-child{margin-bottom:0}
+.rec-kr-num{width:20px;height:20px;border-radius:50%;background:#EAF3DE;color:#3B6D11;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.rec-kr-text{font-size:12px;color:#333;line-height:1.55}
+.rec-kr-note{font-size:11px;color:#888;margin-top:2px}
 .tscroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:1.25rem;scrollbar-width:none}
 .tscroll::-webkit-scrollbar{display:none}
 .tpill{background:#fff;border:1px solid #DDD8D0;border-radius:20px;padding:6px 14px;font-size:12px;color:#666;cursor:pointer;white-space:nowrap;font-family:inherit;font-weight:500}
 .tpill:hover,.tpill.on{border-color:#F0B8A0;color:#993C1D}
 .tpill.on{background:#FAECE7}
+.sample-team-hdr{font-size:13px;font-weight:600;color:#333;margin-bottom:12px;padding:10px 14px;background:#fff;border:1px solid #EAE7E2;border-radius:10px;display:flex;align-items:center;gap:7px}
 .sset{background:#fff;border:1px solid #EAE7E2;border-radius:12px;margin-bottom:14px;overflow:hidden}
 .sset-hdr{padding:13px 16px;border-bottom:1px solid #EAE7E2;display:flex;align-items:flex-start;gap:11px}
 .sn{width:24px;height:24px;border-radius:50%;background:#FAECE7;color:#993C1D;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
@@ -102,19 +197,27 @@ textarea:focus{outline:none;border-color:#D85A30}
 .skt{font-size:13px;color:#555;line-height:1.6}
 .skt strong{color:#1a1a1a;font-weight:600}
 .gc{background:#fff;border:1px solid #EAE7E2;border-radius:12px;overflow:hidden;margin-bottom:14px}
-.gh{padding:11px 14px;background:#F9F8F6;border-bottom:1px solid #EAE7E2;font-size:13px;font-weight:600;color:#333}
+.gh{padding:11px 14px;background:#F9F8F6;border-bottom:1px solid #EAE7E2;font-size:13px;font-weight:600;color:#333;display:flex;align-items:center;gap:7px}
 .gb{padding:14px}
-.si{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.si-item{display:flex;gap:8px;align-items:flex-start}
-.sl{width:26px;height:26px;border-radius:6px;background:#FAECE7;color:#D85A30;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sd{font-size:12px;color:#444;line-height:1.4;padding-top:3px}
-.sd strong{color:#1a1a1a;display:block;font-weight:600}
+.smarts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.smarts-item{display:flex;gap:10px;align-items:flex-start;padding:10px;background:#F9F8F6;border-radius:8px;border:1px solid #EAE7E2}
+.smarts-item.full{grid-column:span 2}
+.sl{width:30px;height:30px;border-radius:7px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sd{font-size:12px;color:#444;line-height:1.4}
+.sd strong{color:#1a1a1a;display:block;font-weight:600;margin-bottom:2px}
+.sd em{color:#888;font-style:normal;font-size:11px}
 .gt{width:100%;border-collapse:collapse;font-size:12px}
-.gt th{text-align:left;padding:6px 10px;background:#F7F5F2;color:#666;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-.gt td{padding:7px 10px;border-bottom:1px solid #F0EDE8;color:#444;vertical-align:top;line-height:1.5}
+.gt th{text-align:left;padding:7px 10px;background:#F7F5F2;color:#666;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.gt td{padding:8px 10px;border-bottom:1px solid #F0EDE8;color:#444;vertical-align:top;line-height:1.55}
 .gt tr:last-child td{border-bottom:none}
 .gt .weak{color:#993C1D}
-.gt .good{color:#3B6D11}
+.hl-s{background:#FFF3CD;padding:0 2px;border-radius:2px;font-weight:500}
+.hl-m{background:#D4EDDA;padding:0 2px;border-radius:2px;font-weight:500}
+.hl-a{background:#CCE5FF;padding:0 2px;border-radius:2px;font-weight:500}
+.hl-r{background:#F8D7DA;padding:0 2px;border-radius:2px;font-weight:500}
+.hl-t{background:#E2CFFF;padding:0 2px;border-radius:2px;font-weight:500}
+.hl-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.hl-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#555;padding:2px 8px;border-radius:12px}
 .ct{width:100%;border-collapse:collapse;font-size:13px}
 .ct td{padding:9px 14px;border-bottom:1px solid #F0EDE8;vertical-align:middle}
 .ct tr:last-child td{border-bottom:none}
@@ -136,7 +239,7 @@ textarea:focus{outline:none;border-color:#D85A30}
 
 <div class="badge-row">
   <div class="pc-badge">People &amp; Culture &nbsp;|&nbsp; Internal Use Only &nbsp;|&nbsp; 2025–26</div>
-  <div class="demo-badge"><div class="demo-dot"></div> Demo Mode — Simulated Results</div>
+  <div class="demo-badge"><div class="demo-dot"></div> Demo Mode</div>
 </div>
 
 <div class="tabs">
@@ -145,12 +248,12 @@ textarea:focus{outline:none;border-color:#D85A30}
   <button class="tab" onclick="showTab('guide',this)">Quick Reference</button>
 </div>
 
-<!-- CHECKER -->
+<!-- ═══ CHECKER ═══ -->
 <div id="tab-checker">
   <div class="demo-info">
     <span style="font-size:18px;flex-shrink:0">👋</span>
     <div class="demo-info-text">
-      <strong>This is a live demo for the team presentation.</strong> Enter any OKR below and click "Check OKR Quality" to see exactly how the tool evaluates and gives feedback. Results are simulated for the demo — the live version connects to the AI and evaluates in real time.
+      <strong>Live demo for team presentation.</strong> Type any OKR and click "Check OKR Quality" to see exactly how the tool evaluates and gives feedback. Try a weak OKR first, then a strong one to see the contrast.
     </div>
   </div>
   <div class="privacy">
@@ -158,13 +261,11 @@ textarea:focus{outline:none;border-color:#D85A30}
     <span><strong>Data privacy:</strong> Do not enter sensitive beneficiary data, confidential financial targets, or personal information. OKR text describing work goals is safe to use here.</span>
   </div>
   <div class="card">
-    <div class="row2">
-      <div>
-        <div class="fl">Your team / function</div>
-        <select id="team-sel">
+      <div class="fl">Your team / function</div>
+      <select id="team-sel" onchange="onTeamChange(this.value)">
           <option value="eip">Economic Inclusion Program (EIP)</option>
           <option value="asha">Asha Kiran</option>
-          <option value="skilling">Centre for Skill Development &amp; Entrepreneurship</option>
+          <option value="skilling">Centre S/O</option>
           <option value="incubator">Social Entrepreneurship — Incubator &amp; Accelerator</option>
           <option value="iaf">Indian Administrative Fellowship (IAF)</option>
           <option value="fundraising">Fundraising &amp; Partnerships</option>
@@ -174,17 +275,85 @@ textarea:focus{outline:none;border-color:#D85A30}
           <option value="hr">People &amp; Culture</option>
           <option value="finance">Finance &amp; Operations</option>
         </select>
+  </div>
+
+  <!-- ── Bulk upload trigger ── -->
+  <div class="bulk-trigger-row">
+    <button class="btn-bulk" onclick="toggleBulkPanel()">📤 Upload OKRs in bulk</button>
+  </div>
+
+  <!-- ── Bulk upload panel ── -->
+  <div class="bulk-panel" id="bulk-panel">
+    <div class="bulk-panel-hdr">
+      <span class="bulk-panel-title">📤 Bulk Upload OKRs</span>
+      <button class="bulk-close" onclick="toggleBulkPanel()">✕</button>
+    </div>
+    <div class="bulk-tabs">
+      <button class="bulk-tab active" id="btab-file" onclick="switchBulkTab('file')">Upload file (CSV / Excel)</button>
+      <button class="bulk-tab" id="btab-paste" onclick="switchBulkTab('paste')">Paste text</button>
+    </div>
+    <div class="bulk-body">
+      <!-- File upload -->
+      <div id="bulk-file-panel">
+        <div class="bulk-format">
+          <strong>Expected columns in your file:</strong>
+          Objective &nbsp;|&nbsp; KR1 &nbsp;|&nbsp; KR2 &nbsp;|&nbsp; KR3 &nbsp;|&nbsp; KR4 &nbsp;|&nbsp; KR5<br>
+          One row per Objective. Max 3 rows (3 Objectives).
+        </div>
+        <div class="bulk-drop" id="bulk-drop-zone" onclick="document.getElementById('bulk-file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleBulkDrop(event)">
+          <div class="bulk-drop-icon">📂</div>
+          <p>Click to browse or drag and drop your file here</p>
+          <span>Accepts .xlsx, .xls or .csv</span>
+        </div>
+        <input type="file" id="bulk-file-input" class="bulk-file-input" accept=".xlsx,.xls,.csv" onchange="handleBulkFile(event)"/>
+        <div class="bulk-actions">
+          <button class="btn-bulk-template" onclick="downloadBulkTemplate()">⬇ Download template</button>
+        </div>
       </div>
-      <div>
-        <div class="fl">OKR level</div>
-        <select id="level-sel">
-          <option>Individual</option>
-          <option>Team / Function</option>
-          <option>Organisation</option>
-        </select>
+      <!-- Paste text -->
+      <div id="bulk-paste-panel" style="display:none">
+        <div class="bulk-format">
+          <strong>Format — one Objective block per line group, separated by a blank line:</strong>
+          Objective: Your objective text here<br>
+          KR1: First key result<br>
+          KR2: Second key result<br>
+          KR3: Third key result
+        </div>
+        <textarea class="bulk-paste-area" id="bulk-paste-input" placeholder="Objective: Equip 2,000 youth with market-relevant skills by March 2026&#10;KR1: Train 2,000 youth across 6 skilling verticals by December 2025&#10;KR2: Achieve 70% placement rate within 60 days by March 2026&#10;KR3: Retain 80% of placed youth for 6 months by March 2026"></textarea>
+        <div class="bulk-actions">
+          <button class="btn-bulk-import" onclick="importBulkPaste()">Import</button>
+        </div>
       </div>
+      <div class="bulk-msg" id="bulk-msg"></div>
     </div>
   </div>
+
+  <!-- ── Team OKR alignment (optional) ── -->
+  <div class="cascade-wrap">
+    <button class="cascade-toggle-btn" id="cascade-btn" onclick="toggleCascade()">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">🔗</span>
+        <span>Add Team / Function OKR <span style="font-weight:400;color:#555">(check alignment &amp; get better KR suggestions)</span></span>
+      </span>
+      <span style="display:flex;align-items:center;gap:7px">
+        <span class="cascade-opt">Optional</span>
+        <span class="cascade-toggle-icon">+</span>
+      </span>
+    </button>
+    <div class="cascade-body" id="cascade-body">
+      <div class="cascade-hint">
+        <span>💡</span>
+        <span>Paste your team's OKR here. The checker will show how well your individual OKRs support the team goal and suggest Key Results to fill any gaps. Quality check runs fine without this.</span>
+      </div>
+      <div id="team-objs-container"></div>
+      <button class="btn-add-team-obj" id="add-team-obj-btn" onclick="addTeamObj()">
+        <span style="font-size:15px;line-height:1">+</span> Add Team Objective
+      </button>
+      <p style="font-size:11px;color:#888;text-align:center;margin-top:6px" id="team-obj-limit" style="display:none">Max 3 team objectives</p>
+    </div>
+  </div>
+
+  <!-- ── Individual OKRs ── -->
   <div id="objs-container"></div>
   <button class="btn-add-obj" id="add-obj-btn" onclick="addObj()">
     <span style="font-size:18px;line-height:1">+</span> Add another Objective
@@ -196,28 +365,74 @@ textarea:focus{outline:none;border-color:#D85A30}
   <div id="results" class="results"></div>
 </div>
 
-<!-- SAMPLES -->
+<!-- ═══ SAMPLES ═══ -->
 <div id="tab-samples" style="display:none">
   <div class="tscroll" id="pills"></div>
+  <div id="sample-team-hdr" class="sample-team-hdr" style="display:none"></div>
   <div id="sample-content"></div>
 </div>
 
-<!-- GUIDE -->
+<!-- ═══ GUIDE ═══ -->
 <div id="tab-guide" style="display:none">
+
   <div class="gc">
-    <div class="gh">The SMART test — apply to every Key Result</div>
+    <div class="gh">✦ SMARTS — Apply this test to every Key Result</div>
     <div class="gb">
-      <div class="si">
-        <div class="si-item"><div class="sl">S</div><div class="sd"><strong>Specific</strong>Does it say exactly what will be done?</div></div>
-        <div class="si-item"><div class="sl">M</div><div class="sd"><strong>Measurable</strong>Does it have a number, % or target?</div></div>
-        <div class="si-item"><div class="sl">A</div><div class="sd"><strong>Ambitious but achievable</strong>Is it stretching but realistic?</div></div>
-        <div class="si-item"><div class="sl">T</div><div class="sd"><strong>Time-bound</strong>Does it have a clear deadline?</div></div>
-        <div class="si-item" style="grid-column:span 2"><div class="sl" style="background:#E1F5EE;color:#0F6E56">O</div><div class="sd"><strong>Outcome focused</strong>Is it a result — not just an activity or task?</div></div>
+      <div class="smarts-grid">
+        <div class="smarts-item">
+          <div class="sl" style="background:#FFF3CD;color:#856404">S</div>
+          <div class="sd">
+            <strong>Specific</strong>
+            Names the programme, geography, beneficiary count, or exact scope — no vague language
+            <em>e.g. "in Gumla district" not "in target areas"</em>
+          </div>
+        </div>
+        <div class="smarts-item">
+          <div class="sl" style="background:#D4EDDA;color:#155724">M</div>
+          <div class="sd">
+            <strong>Measurable</strong>
+            Has a number, %, ₹ figure, or count that a third party can verify — not "improved" or "better"
+            <em>e.g. "90% data completeness" not "good data quality"</em>
+          </div>
+        </div>
+        <div class="smarts-item">
+          <div class="sl" style="background:#CCE5FF;color:#004085">A</div>
+          <div class="sd">
+            <strong>Ambitious</strong>
+            Pushes the team beyond last cycle's baseline — not a repeat of business-as-usual
+            <em>e.g. "reduce attrition from 22% to 14%" not "maintain attrition levels"</em>
+          </div>
+        </div>
+        <div class="smarts-item">
+          <div class="sl" style="background:#F8D7DA;color:#721c24">R</div>
+          <div class="sd">
+            <strong>Result-oriented</strong>
+            Describes what will be achieved — not just what will be done or delivered
+            <em>e.g. "70% of youth placed in jobs" not "run placement drives"</em>
+          </div>
+        </div>
+        <div class="smarts-item">
+          <div class="sl" style="background:#E2CFFF;color:#4B0082">T</div>
+          <div class="sd">
+            <strong>Time-bound</strong>
+            States a specific month and year — not "by end of year" or "soon"
+            <em>e.g. "by March 2026" not "by the end of the cycle"</em>
+          </div>
+        </div>
+        <div class="smarts-item">
+          <div class="sl" style="background:#FAECE7;color:#993C1D">S</div>
+          <div class="sd">
+            <strong>Stretching</strong>
+            Challenges the team to innovate or solve something they haven't solved before — not just doing more of the same
+            <em>e.g. "first-of-its-kind government MoU" not "continue existing programme"</em>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
   <div class="gc">
-    <div class="gh">Score thresholds &amp; upload decision</div>
+    <div class="gh">📊 Score thresholds &amp; upload decision</div>
     <div class="gb" style="padding:0">
       <table class="gt">
         <tr><td style="width:100px;font-weight:600;color:#3B6D11">90–100%</td><td style="color:#3B6D11">✅ Ready to upload to Keka immediately</td></tr>
@@ -227,28 +442,52 @@ textarea:focus{outline:none;border-color:#D85A30}
       </table>
     </div>
   </div>
+
   <div class="gc">
-    <div class="gh">Common mistakes to avoid</div>
+    <div class="gh">🚩 Keka Upload Red Flags — Spot and Fix These Before Submitting</div>
     <div class="gb" style="padding:0">
+      <div class="hl-legend" style="padding:10px 10px 0">
+        <span class="hl-tag" style="background:#FFF3CD"><span class="hl-s">S</span> Specific</span>
+        <span class="hl-tag" style="background:#D4EDDA"><span class="hl-m">M</span> Measurable</span>
+        <span class="hl-tag" style="background:#CCE5FF"><span class="hl-a">A</span> Ambitious</span>
+        <span class="hl-tag" style="background:#F8D7DA"><span class="hl-r">R</span> Result-oriented</span>
+        <span class="hl-tag" style="background:#E2CFFF"><span class="hl-t">T</span> Time-bound</span>
+      </div>
       <table class="gt">
-        <thead><tr><th>❌ Weak — avoid this</th><th>✅ Strong — aim for this</th></tr></thead>
+        <thead><tr><th>❌ Red flag — rewrite this</th><th>✅ What it should look like</th></tr></thead>
         <tbody>
-          <tr><td class="weak">Build team, get approvals, plan event</td><td class="good">Core team of 8 finalised, budget approved, date confirmed by Feb 28</td></tr>
-          <tr><td class="weak">Follow up with all stakeholders</td><td class="good">Bi-weekly check-ins with all 6 stakeholders, 100% tasks done by April 15</td></tr>
-          <tr><td class="weak">Improve programme quality</td><td class="good">Beneficiary satisfaction score improves from 72% to 85% by March 2026</td></tr>
-          <tr><td class="weak">Do training sessions</td><td class="good">200 field staff trained on data tools, 90% pass rate by December 2025</td></tr>
-          <tr><td class="weak">Complete onboarding process</td><td class="good">100% of new joiners complete 30-day onboarding, 85% satisfaction by Dec 2025</td></tr>
+          <tr>
+            <td class="weak">Build team, get approvals, plan event</td>
+            <td><span class="hl-r">Annual staff event</span> held for <span class="hl-m">50 employees</span> with <span class="hl-r">80% satisfaction score</span> <span class="hl-t">by March 2026</span></td>
+          </tr>
+          <tr>
+            <td class="weak">Follow up with all stakeholders</td>
+            <td><span class="hl-m">All 6 partner calls</span> completed on time with <span class="hl-r">written summary shared within 2 days</span>, every month <span class="hl-t">by June 2026</span></td>
+          </tr>
+          <tr>
+            <td class="weak">Improve programme quality</td>
+            <td><span class="hl-r">Beneficiary satisfaction score</span> increases from <span class="hl-m">60% to 80%</span> <span class="hl-t">by December 2025</span></td>
+          </tr>
+          <tr>
+            <td class="weak">Do training sessions</td>
+            <td><span class="hl-m">50 staff trained</span> on new data system, <span class="hl-r">90% score above 70%</span> in the test <span class="hl-t">by January 2026</span></td>
+          </tr>
+          <tr>
+            <td class="weak">Complete onboarding process</td>
+            <td>Every <span class="hl-m">new joiner</span> rates their first 30 days <span class="hl-r">8/10 or above</span> in the onboarding survey <span class="hl-t">by December 2025</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
+
   <div class="gc">
-    <div class="gh">OKR cascade — who writes first?</div>
+    <div class="gh">🔗 OKR cascade — who writes first?</div>
     <div class="gb" style="padding:0">
       <table class="ct">
-        <tr><td style="width:52px"><div class="cstep">1</div></td><td><strong>Organisation-level OKRs</strong><br><span style="font-size:12px;color:#888">Set by leadership first — shared before teams write</span></td></tr>
-        <tr><td><div class="cstep">2</div></td><td><strong>Function / Team OKRs</strong><br><span style="font-size:12px;color:#888">Aligned to org OKRs</span></td></tr>
-        <tr><td><div class="cstep">3</div></td><td><strong>Individual OKRs</strong><br><span style="font-size:12px;color:#888">Aligned to team OKRs</span></td></tr>
+        <tr><td style="width:52px"><div class="cstep">1</div></td><td><strong>Organisation-level OKRs</strong><br><span style="font-size:12px;color:#888">Set by leadership — shared before teams write their OKRs</span></td></tr>
+        <tr><td><div class="cstep">2</div></td><td><strong>Function / Team OKRs</strong><br><span style="font-size:12px;color:#888">Aligned to org OKRs, written by team leads</span></td></tr>
+        <tr><td><div class="cstep">3</div></td><td><strong>Individual OKRs</strong><br><span style="font-size:12px;color:#888">Aligned to team OKRs, written by each Nudgester</span></td></tr>
         <tr><td><div class="cstep" style="background:#EAF3DE;color:#3B6D11">4</div></td><td><strong>Submit to Keka</strong><br><span style="font-size:12px;color:#888">Only after checker score reaches 60%+</span></td></tr>
       </table>
     </div>
@@ -258,21 +497,178 @@ textarea:focus{outline:none;border-color:#D85A30}
 </div>
 <script>
 // ── State ──
-let objs = [newObj()];
-let sTeam = "eip";
-function newObj(){ return { id: Date.now()+Math.random(), obj:"", krs:["","",""] }; }
-function x(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+let objs=[newObj()],sTeam="eip",lastResults=[];
+// Team OKR cascade state
+let teamObjs=[],cascadeOpen=false;
+
+function newTeamObj(){return{id:Date.now()+Math.random(),obj:"",krs:["",""]};}
+
+// ── Cascade toggle ──
+function toggleCascade(){
+  cascadeOpen=!cascadeOpen;
+  const btn=document.getElementById("cascade-btn");
+  const body=document.getElementById("cascade-body");
+  btn.classList.toggle("open",cascadeOpen);
+  body.classList.toggle("open",cascadeOpen);
+  if(cascadeOpen&&teamObjs.length===0){teamObjs=[newTeamObj()];renderTeamObjs();}
+}
+
+// ── Render team OKRs ──
+function renderTeamObjs(){
+  const c=document.getElementById("team-objs-container");
+  if(!c) return;
+  c.innerHTML=teamObjs.map((o,i)=>`
+    <div class="team-obj-block">
+      <div class="team-obj-hdr">
+        <div class="team-obj-hdr-l"><div class="team-obj-n">${i+1}</div><span class="team-obj-lbl">Team Objective ${i+1}</span></div>
+        ${teamObjs.length>1?`<button class="btn-del-team-obj" onclick="removeTeamObj(${i})">✕ Remove</button>`:""}
+      </div>
+      <div class="team-obj-body">
+        <div class="fl" style="margin-bottom:5px;font-size:10px">Team Objective</div>
+        <textarea rows="2" id="tobj-${i}" placeholder="e.g. Scale EIP graduation programme to 5,000 households across 3 states by March 2026" style="margin-bottom:10px;border-color:#B5D4F4">${x(o.obj)}</textarea>
+        <div class="fl" style="margin-bottom:5px;font-size:10px">Team Key Results (optional)</div>
+        ${o.krs.map((kr,j)=>`
+          <div class="team-kr-row">
+            <div class="team-kr-n">${j+1}</div>
+            <textarea rows="1" style="flex:1;border-color:#B5D4F4" id="tkr-${i}-${j}" placeholder="Team KR${j+1}: measurable team-level result">${x(kr)}</textarea>
+            ${o.krs.length>1?`<button class="btn-del-team-kr" onclick="removeTeamKR(${i},${j})">✕</button>`:""}
+          </div>`).join("")}
+        ${o.krs.length<4?`<button class="btn-add-team-kr" onclick="addTeamKR(${i})">+ Add Key Result</button>`:""}
+      </div>
+    </div>`).join("");
+
+  teamObjs.forEach((o,i)=>{
+    const ta=document.getElementById(`tobj-${i}`);
+    if(ta) ta.addEventListener("input",function(){teamObjs[i].obj=this.value;});
+    o.krs.forEach((_,j)=>{
+      const kt=document.getElementById(`tkr-${i}-${j}`);
+      if(kt) kt.addEventListener("input",function(){teamObjs[i].krs[j]=this.value;});
+    });
+  });
+
+  const addBtn=document.getElementById("add-team-obj-btn");
+  if(addBtn) addBtn.style.display=teamObjs.length>=3?"none":"flex";
+  const lim=document.getElementById("team-obj-limit");
+  if(lim) lim.style.display=teamObjs.length>=3?"block":"none";
+}
+
+function addTeamObj(){if(teamObjs.length<3){teamObjs.push(newTeamObj());renderTeamObjs();}}
+function removeTeamObj(i){teamObjs.splice(i,1);if(teamObjs.length===0)teamObjs=[newTeamObj()];renderTeamObjs();}
+function addTeamKR(i){if(teamObjs[i].krs.length<4){teamObjs[i].krs.push("");renderTeamObjs();}}
+function removeTeamKR(i,j){if(teamObjs[i].krs.length>1){teamObjs[i].krs.splice(j,1);renderTeamObjs();}}
+
+// ── Alignment scoring ──
+function scoreAlignment(tObjs,indivObj,indivKRs){
+  const activeTeam=tObjs.filter(o=>o.obj.trim());
+  if(!activeTeam.length) return null;
+  const stopW=new Set(["the","and","for","are","will","with","have","been","that","this","from","into","they","what","your","each","when","which","their","there","about","these","those","would","could","should","also","then","them","our","all","its","per","has","not","but","was","were","can","may","more","than","most","any","some","such","both","each","into","over","after","before","under","within","without","across","between","through"]);
+  const indivFull=(indivObj+" "+indivKRs.filter(k=>k.trim()).join(" ")).toLowerCase();
+
+  let best={score:0,idx:0,matchedObj:""};
+  activeTeam.forEach((tObj,idx)=>{
+    const teamFull=(tObj.obj+" "+tObj.krs.join(" ")).toLowerCase();
+    const teamWords=[...new Set((teamFull.match(/\b[a-z]{3,}\b/g)||[]))].filter(w=>!stopW.has(w));
+    if(!teamWords.length) return;
+    const hits=teamWords.filter(w=>indivFull.includes(w)).length;
+    const raw=Math.round(Math.min(95,(hits/teamWords.length)*140));
+    // Bonus for numeric overlap
+    const teamNums=(teamFull.match(/\d+/g)||[]);
+    const indivNums=(indivFull.match(/\d+/g)||[]);
+    const numBonus=teamNums.filter(n=>indivNums.includes(n)).length*3;
+    const score=Math.min(98,raw+numBonus);
+    if(score>best.score){best={score,idx,matchedObj:tObj.obj};}
+  });
+  return best;
+}
+
+// ── Gap analysis ──
+function findGaps(tObjs,indivKRs){
+  const gaps=[];
+  const activeTeam=tObjs.filter(o=>o.obj.trim());
+  if(!activeTeam.length) return gaps;
+  const indivText=indivKRs.filter(k=>k.trim()).join(" ").toLowerCase();
+  const themes=[
+    {pat:/household|enrol|beneficiar/i,gap:"Team targets household enrolment — add a KR with a specific count of households you will directly contribute to"},
+    {pat:/income|livelihood|earning/i,gap:"Team targets income outcomes — add a KR tracking income improvement for households in your scope"},
+    {pat:/srlm|government|state partner/i,gap:"Team targets government partnerships — add a KR specifying your direct contribution to partner engagement"},
+    {pat:/train|capacity|workshop/i,gap:"Team targets training outcomes — add a KR with the number of people you will train and a pass rate"},
+    {pat:/data|mis|dashboard/i,gap:"Team targets data quality — add a KR with a measurable completeness or accuracy target"},
+    {pat:/placement|employ|job/i,gap:"Team targets job placement — add a KR tracking placement rate or retention within your scope"},
+    {pat:/fund|donor|raise|grant/i,gap:"Team targets fundraising — add a KR specifying your contribution to the team's funding goal"},
+    {pat:/publication|report|evidence|brief/i,gap:"Team targets knowledge outputs — add a KR for the report, brief, or study you will personally deliver"},
+    {pat:/retention|attrition/i,gap:"Team targets retention improvement — add a KR with a specific attrition reduction you are accountable for"},
+    {pat:/media|coverage|content/i,gap:"Team targets media outcomes — add a KR with the number of placements or reach you will personally drive"},
+  ];
+  themes.forEach(t=>{
+    const inTeam=activeTeam.some(o=>(o.obj+" "+o.krs.join(" ")).match(t.pat));
+    const inIndiv=t.pat.test(indivText);
+    if(inTeam&&!inIndiv) gaps.push(t.gap);
+  });
+  return gaps.slice(0,3);
+}
+
+// ── Recommended KRs ──
+function recommendKRs(indivObj,existingKRs,dims,tObjs){
+  const recs=[];
+  const objL=indivObj.toLowerCase();
+  const existL=existingKRs.filter(k=>k.trim()).join(" ").toLowerCase();
+  const hasDate=/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|2025|2026/i.test(existL);
+  const hasNum=/\d+/.test(existL);
+  const hasPct=/%/.test(existL);
+  const hasOutcome=/achieve|reach|reduce|increase|improve|attain|complete/i.test(existL);
+
+  // From team OKR gaps first
+  const activeTeam=(tObjs||[]).filter(o=>o.obj.trim());
+  if(activeTeam.length){
+    const tText=activeTeam.map(o=>o.obj+" "+o.krs.join(" ")).join(" ").toLowerCase();
+    const teamRecs=[
+      {pat:/household|enrol/i,kr:"Enrol and verify [X] households in [specific geography] by [Month Year], with documentation submitted to SRLM within 15 days"},
+      {pat:/income|livelihood/i,kr:"[X]% of households in my cohort report average monthly income above ₹[Y] at the 6-month check-in by [Month Year]"},
+      {pat:/train|capacity/i,kr:"Train [X] [stakeholder group] on [specific protocol], with [Y]% scoring above 80% in post-training assessment by [Month Year]"},
+      {pat:/partner|srlm|government/i,kr:"[X] SRLM block teams onboarded and submitting independent MIS reports for 3 consecutive months by [Month Year]"},
+      {pat:/data|mis|dashboard/i,kr:"Achieve [X]% data completeness across [programme] field data for [Y] consecutive months by [Month Year]"},
+      {pat:/placement|employ/i,kr:"[X]% of youth trained in my batch placed in formal employment within 60 days of course completion by [Month Year]"},
+      {pat:/fund|donor/i,kr:"[X] new donor meetings conducted, with [Y] proposals submitted and ₹[Z] in commitments secured by [Month Year]"},
+      {pat:/evidence|report|brief/i,kr:"Deliver [specific report or brief] with findings from [programme/geography], reviewed and approved by [Month Year]"},
+      {pat:/media|coverage/i,kr:"Secure [X] media placements in [publication type], with [Y] authored by Nudge leadership, by [Month Year]"},
+      {pat:/attrition|retention/i,kr:"Voluntary attrition in [team/cohort] reduces from [X]% to [Y]% through [specific initiative] by [Month Year]"},
+    ];
+    teamRecs.forEach(r=>{
+      if(r.pat.test(tText)&&!r.pat.test(existL)&&recs.length<2) recs.push({text:r.kr,note:"Bridges gap with your team OKR"});
+    });
+  }
+
+  // SMARTS gap-based recommendations
+  if(!hasDate&&recs.length<3) recs.push({text:"[Specific deliverable] completed and verified by [Month] [Year] — add a firm deadline so progress can be tracked at each check-in",note:"Fixes missing T — Time-bound"});
+  if(!hasPct&&!hasNum&&recs.length<3) recs.push({text:"[X]% [outcome metric] achieved across [specific scope] by [Month Year] — add a measurable number so the KR can be verified",note:"Fixes missing M — Measurable"});
+  if(!hasOutcome&&recs.length<3) recs.push({text:"[Beneficiary group] achieves [specific, verifiable improvement] by [Month Year], measured at end-of-cycle review — focus on the result, not the activity",note:"Fixes missing R — Result-oriented"});
+
+  // Generic SMARTS if still short
+  const generics=[
+    {text:"Achieve [X]% [outcome] for [Y] [beneficiaries / stakeholders] in [specific geography or scope] by [Month Year]",note:"Strong SMARTS template — fill in your numbers"},
+    {text:"[X] of [Y] [stakeholder group] complete [specific milestone] by [Month Year], tracked through [verification method]",note:"Strong SMARTS template — fill in your numbers"},
+    {text:"[Metric] improves from [baseline] to [target] by [Month Year], with progress reviewed at each monthly check-in",note:"Strong SMARTS template — fill in your numbers"},
+  ];
+  let gi=0;
+  while(recs.length<3&&gi<generics.length){recs.push(generics[gi++]);}
+
+  return recs.slice(0,3);
+}
+function newObj(){return{id:Date.now()+Math.random(),obj:"",krs:["","",""]};}
+function x(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+// ── Team selector syncs samples tab ──
+function onTeamChange(id){
+  sTeam=id;
+}
 
 // ── Render objectives ──
 function render(){
-  const c = document.getElementById("objs-container");
-  c.innerHTML = objs.map((o,i) => `
+  const c=document.getElementById("objs-container");
+  c.innerHTML=objs.map((o,i)=>`
     <div class="obj-block">
       <div class="obj-hdr">
-        <div class="obj-hdr-l">
-          <div class="obj-n">${i+1}</div>
-          <span class="obj-lbl">Objective ${i+1}</span>
-        </div>
+        <div class="obj-hdr-l"><div class="obj-n">${i+1}</div><span class="obj-lbl">Objective ${i+1}</span></div>
         ${objs.length>1?`<button class="btn-del-obj" onclick="removeObj(${i})">✕ Remove</button>`:""}
       </div>
       <div class="obj-body">
@@ -282,155 +678,268 @@ function render(){
         ${o.krs.map((kr,j)=>`
           <div class="kr-row">
             <div class="kr-n${kr.trim()?" on":""}" id="krn-${i}-${j}">${j+1}</div>
-            <textarea rows="2" style="flex:1" id="kr-${i}-${j}" placeholder="KR${j+1}: Specific, measurable, with a clear number and deadline">${x(kr)}</textarea>
+            <textarea rows="2" style="flex:1" id="kr-${i}-${j}" placeholder="KR${j+1}: Specific, measurable — include a number and a deadline">${x(kr)}</textarea>
             ${o.krs.length>2?`<button class="btn-del-kr" onclick="removeKR(${i},${j})">✕</button>`:""}
           </div>`).join("")}
         ${o.krs.length<5?`<button class="btn-add-kr" onclick="addKR(${i})">+ Add Key Result</button>`:""}
+        <div class="kr-warning${o.krs.filter(k=>k.trim()).length<2&&o.obj.trim()?" show":""}" id="kr-warn-${i}">
+          ⚠️ Nudge guidelines recommend 3–5 Key Results. You can evaluate with 1 KR, but adding more gives richer feedback.
+        </div>
       </div>
     </div>`).join("");
 
   objs.forEach((o,i)=>{
-    const ta = document.getElementById(`obj-${i}`);
-    if(ta) ta.addEventListener("input",function(){ objs[i].obj=this.value; });
+    const ta=document.getElementById(`obj-${i}`);
+    if(ta) ta.addEventListener("input",function(){
+      objs[i].obj=this.value;
+      const w=document.getElementById(`kr-warn-${i}`);
+      if(w) w.className="kr-warning"+(objs[i].krs.filter(k=>k.trim()).length<2&&this.value.trim()?" show":"");
+    });
     o.krs.forEach((_,j)=>{
-      const kt = document.getElementById(`kr-${i}-${j}`);
+      const kt=document.getElementById(`kr-${i}-${j}`);
       if(kt) kt.addEventListener("input",function(){
         objs[i].krs[j]=this.value;
         const dot=document.getElementById(`krn-${i}-${j}`);
         if(dot) dot.className="kr-n"+(this.value.trim()?" on":"");
+        const w=document.getElementById(`kr-warn-${i}`);
+        if(w) w.className="kr-warning"+(objs[i].krs.filter(k=>k.trim()).length<2&&objs[i].obj.trim()?" show":"");
       });
     });
   });
-  const v=objs.filter(o=>o.obj.trim()&&o.krs.filter(k=>k.trim()).length>=2).length;
+
+  const v=objs.filter(o=>o.obj.trim()&&o.krs.filter(k=>k.trim()).length>=1).length;
   const lbl=document.getElementById("check-lbl");
   if(lbl) lbl.textContent=v>1?`Check All ${v} Objectives`:"Check OKR Quality";
   document.getElementById("add-obj-btn").style.display=objs.length>=3?"none":"flex";
   document.getElementById("obj-limit").style.display=objs.length>=3?"block":"none";
 }
 
-function addObj(){ if(objs.length<3){ objs.push(newObj()); render(); } }
-function removeObj(i){ objs.splice(i,1); render(); }
-function addKR(i){ if(objs[i].krs.length<5){ objs[i].krs.push(""); render(); } }
-function removeKR(i,j){ if(objs[i].krs.length>2){ objs[i].krs.splice(j,1); render(); } }
+function addObj(){if(objs.length<3){objs.push(newObj());render();}}
+function removeObj(i){objs.splice(i,1);render();}
+function addKR(i){if(objs[i].krs.length<5){objs[i].krs.push("");render();}}
+function removeKR(i,j){if(objs[i].krs.length>2){objs[i].krs.splice(j,1);render();}}
 
 // ── Colours ──
-function sColor(s){ return s>=90?"#3B6D11":s>=75?"#0F6E56":s>=60?"#854F0B":"#993C1D"; }
-function sBg(s){ return s>=90?"#EAF3DE":s>=75?"#E1F5EE":s>=60?"#FAEEDA":"#FAECE7"; }
-function vClass(v){ return {"Ready to upload":"v-up","Minor revisions needed":"v-mn","Needs revision":"v-rv"}[v]||"v-rw"; }
-function dColor(s,m){ const p=(s/m)*100; return p>=80?"#3B6D11":p>=60?"#0F6E56":p>=40?"#BA7517":"#D85A30"; }
+function sColor(s){return s>=90?"#3B6D11":s>=75?"#0F6E56":s>=60?"#854F0B":"#993C1D";}
+function sBg(s){return s>=90?"#EAF3DE":s>=75?"#E1F5EE":s>=60?"#FAEEDA":"#FAECE7";}
+function vClass(v){return{"Ready to upload":"v-up","Minor revisions needed":"v-mn","Needs revision":"v-rv"}[v]||"v-rw";}
+function dColor(s,m){const p=(s/m)*100;return p>=80?"#3B6D11":p>=60?"#0F6E56":p>=40?"#BA7517":"#D85A30";}
 
-// ── Demo response generator ──
-function demoEvaluate(obj, krs, teamLabel){
-  const filled = krs.filter(k=>k.trim());
-  const objText = obj.trim();
-
-  // Score heuristics based on content quality signals
-  let baseScore = 55;
-  const hasNumbers = filled.filter(k=>/\d+/.test(k)).length;
-  const hasDates = filled.filter(k=>/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|2025|2026|q1|q2|q3|q4/i.test(k)).length;
-  const hasPercent = filled.filter(k=>/%/.test(k)).length;
-  const hasRupee = filled.filter(k=>/₹|crore|lakh/i.test(k)).length;
-  const objHasVerb = /^(build|achieve|strengthen|establish|launch|grow|improve|deliver|expand|develop|create|drive|enable|ensure|reduce|increase)/i.test(objText);
-
-  baseScore += Math.min(hasNumbers,3)*6;
-  baseScore += Math.min(hasDates,3)*5;
-  baseScore += hasPercent*4;
-  baseScore += hasRupee*3;
-  if(objHasVerb) baseScore += 5;
-  if(objText.length > 60) baseScore += 3;
-  baseScore = Math.min(97, Math.max(38, baseScore));
-  baseScore = Math.round(baseScore);
-
-  const verdict = baseScore>=90?"Ready to upload":baseScore>=75?"Minor revisions needed":baseScore>=60?"Needs revision":"Needs rework";
-
-  // Dimension scores out of 20 each
-  const specific = Math.round(Math.min(20, 10 + hasNumbers*2.5 + (objText.length>50?2:0)));
-  const measurable = Math.round(Math.min(20, 8 + hasNumbers*3 + hasPercent*2 + hasRupee*2));
-  const ambitious = Math.round(Math.min(20, 12 + (hasNumbers>1?3:0) + (objHasVerb?3:0)));
-  const time_bound = Math.round(Math.min(20, 6 + hasDates*4));
-  const outcome_focused = Math.round(Math.min(20, 10 + hasPercent*2 + (baseScore>70?4:0)));
-
-  // KR feedback
-  const kr_feedback = filled.map((kr,i)=>{
-    let ks = 50;
-    if(/\d+/.test(kr)) ks+=15;
-    if(/%/.test(kr)) ks+=10;
-    if(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|2025|2026/i.test(kr)) ks+=15;
-    if(/₹|crore|lakh/i.test(kr)) ks+=8;
-    ks = Math.min(98, Math.max(32, ks+Math.round(Math.random()*8-4)));
-    let fb;
-    if(ks>=85) fb=`Strong KR — clearly measurable with a specific target and deadline that makes progress easy to track.`;
-    else if(ks>=70) fb=`Good direction but could be stronger — consider adding a specific number or % target to make it fully measurable.`;
-    else if(ks>=55) fb=`Missing either a measurable target or a deadline — both are needed for a KR to be trackable.`;
-    else fb=`This reads more like a task than a result. Try rewriting it to describe what you will achieve, not just what you will do.`;
-    return {kr:i+1, score:ks, feedback:fb};
-  });
-
-  // Contextual strengths and improvements
-  const strengths = [];
-  const improvements = [];
-
-  if(objHasVerb) strengths.push(`The Objective starts with a strong action verb and clearly communicates intent — it's inspiring and direction-setting.`);
-  if(hasNumbers>=2) strengths.push(`Multiple Key Results include specific numerical targets, making progress measurable and trackable throughout the cycle.`);
-  if(hasDates>=2) strengths.push(`Strong use of deadlines across Key Results — this creates accountability and makes check-ins meaningful.`);
-  if(hasPercent>=1) strengths.push(`Using percentage-based targets is a good practice — it shows improvement relative to a baseline, not just an absolute number.`);
-  if(strengths.length===0) strengths.push(`The Objective is clear and understandable — a good starting point to build from.`);
-
-  if(hasDates < filled.length) improvements.push(`Add a specific deadline (month + year) to every Key Result — ${filled.length - hasDates} KR(s) are currently missing one.`);
-  if(hasNumbers < filled.length) improvements.push(`At least one Key Result lacks a measurable number. Add a concrete target — a count, percentage, or rupee figure.`);
-  if(filled.length < 3) improvements.push(`You have only ${filled.length} Key Result(s). Aim for 3–5 to ensure your Objective is fully covered and not dependent on a single measure.`);
-  if(!objHasVerb) improvements.push(`Consider starting the Objective with a stronger action verb (e.g. "Build", "Achieve", "Establish") to make it more inspiring and action-oriented.`);
-  if(improvements.length===0) improvements.push(`Ensure your Key Results connect directly to outcomes that matter for your programme beneficiaries or function, not just activities completed.`);
-
-  // Revised example for weakest KR
-  const weakest = kr_feedback.sort((a,b)=>a.score-b.score)[0];
-  const weakKR = filled[weakest.kr-1]||"";
-  let revised_example = "";
-  if(weakest.score < 75 && weakKR){
-    revised_example = `Instead of "${weakKR.slice(0,60)}${weakKR.length>60?"...":""}" — try: "Achieve [specific target with a number or %] for [scope] by [Month Year]" — make sure the result describes an outcome that can be verified, not just a task completed.`;
+// ── KR rewrite generator ──
+function rewriteKR(kr, hasMeasure, hasDate, hasOutcome){
+  if(hasMeasure && hasDate && hasOutcome) return "";
+  let s = kr.trim().replace(/[.!?]$/,"");
+  // Fix task language to outcome language
+  if(!hasOutcome){
+    s = s
+      .replace(/^conduct\b/i,"Complete")
+      .replace(/^run\b/i,"Deliver")
+      .replace(/^do\b/i,"Achieve")
+      .replace(/^organis[ez]\b/i,"Deliver")
+      .replace(/^follow up\b/i,"Ensure 100% response from all")
+      .replace(/^plan\b/i,"Deliver")
+      .replace(/^prepare\b/i,"Finalise and deliver")
+      .replace(/^attend\b/i,"Complete attendance at")
+      .replace(/^hold\b/i,"Complete");
+    if(!/\b(achieve|reach|reduce|increase|improve|complete|deliver|ensure|retain|secure|attain|grow|launch|sign|publish)\b/i.test(s)){
+      s = s + ", with [measurable result] confirmed";
+    }
   }
-
-  return { score:baseScore, verdict, dimensions:{specific,measurable,ambitious,time_bound,outcome_focused}, strengths, improvements, kr_feedback, revised_example };
+  // Add a number if no measurable target
+  if(!hasMeasure){
+    const injected = s.replace(/\b(household[s]?|staff|team member[s]?|youth|people|partner[s]?|employee[s]?|donor[s]?|beneficiar\w*|programme[s]?|module[s]?|state[s]?|district[s]?|vendor[s]?|visit[s]?)\b/i, "[X] $1");
+    s = injected !== s ? injected : s + " — [X]% / [X count] target";
+  }
+  // Add deadline if missing
+  if(!hasDate) s = s + " by [Month Year]";
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// ── Check ──
-async function checkAll(){
-  const valid = objs.filter(o=>o.obj.trim()&&o.krs.filter(k=>k.trim()).length>=2);
-  if(!valid.length) return;
-  const teamSel = document.getElementById("team-sel");
-  const teamLabel = teamSel.options[teamSel.selectedIndex].text;
-  const btn = document.getElementById("check-btn");
-  btn.disabled = true;
-  document.getElementById("results").innerHTML="";
+// ── Demo evaluation ──
+function demoEvaluate(obj,krs,tObjs){
+  const filled=krs.filter(k=>k.trim());
+  const hasNumbers=filled.filter(k=>/\d+/.test(k)).length;
+  const hasDates=filled.filter(k=>/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|2025|2026|q1|q2|q3|q4/i.test(k)).length;
+  const hasPercent=filled.filter(k=>/%/.test(k)).length;
+  const hasRupee=filled.filter(k=>/₹|crore|lakh/i.test(k)).length;
+  const objVerb=/^(build|achieve|strengthen|establish|launch|grow|improve|deliver|expand|develop|create|drive|enable|ensure|reduce|increase|equip|generate|secure|place)/i.test(obj.trim());
+  const objLong=obj.trim().length>60;
 
-  const results = [];
-  for(let i=0;i<valid.length;i++){
-    btn.innerHTML=`<div class="spin"></div><span>Evaluating ${i+1} of ${valid.length}…</span>`;
-    await new Promise(r=>setTimeout(r,1400+Math.random()*600)); // realistic delay
-    const o = valid[i];
-    const r = demoEvaluate(o.obj, o.krs, teamLabel);
-    results.push({o,r});
+  let levelAdj=0;
+
+  let base=50;
+  base+=Math.min(hasNumbers,3)*6;
+  base+=Math.min(hasDates,3)*6;
+  base+=hasPercent*4;
+  base+=hasRupee*3;
+  if(objVerb) base+=5;
+  if(objLong) base+=3;
+  if(filled.length>=3) base+=5;
+  base+=levelAdj;
+  base=Math.min(97,Math.max(35,Math.round(base)));
+
+  const verdict=base>=90?"Ready to upload":base>=75?"Minor revisions needed":base>=60?"Needs revision":"Needs rework";
+
+  const specific=Math.round(Math.min(20,9+hasNumbers*2+(objLong?2:0)+(objVerb?2:0)));
+  const measurable=Math.round(Math.min(20,7+hasNumbers*3+hasPercent*2+hasRupee*2));
+  const ambitious=Math.round(Math.min(20,11+(hasNumbers>1?3:0)+(objVerb?3:0)+(filled.length>=3?2:0)));
+  const result_oriented=Math.round(Math.min(20,9+hasPercent*2+hasRupee*2+(base>70?3:0)));
+  const time_bound=Math.round(Math.min(20,5+hasDates*5));
+
+  const kr_feedback=filled.map((kr,i)=>{
+    // Detect what's actually present in this specific KR
+    const krHasDate=/\b(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(tember)?|oct(ober)?|nov(ember)?|dec(ember)?|q[1-4])\b.{0,10}(2025|2026)|((2025|2026).{0,10}\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i.test(kr);
+    const krHasNum=/\d+/.test(kr);
+    const krHasPct=/%/.test(kr);
+    const krHasRupee=/₹|crore|lakh/i.test(kr);
+    const krHasMeasure=krHasNum||krHasPct||krHasRupee;
+    const krHasOutcome=/\b(achieve|reach|reduce|increase|improve|attain|complete|ensure|maintain|grow|deliver|launch|secure|sign|publish|deploy|enrol|train|place|retain)\b/i.test(kr);
+    const krHasScope=/\b(all|across|in|within|for|per|of)\b.{1,40}\b(district|state|household|staff|youth|employee|partner|donor|team|programme|module|vendor|beneficiar)/i.test(kr);
+
+    // Score based on what's present
+    let ks=42;
+    if(krHasMeasure) ks+=18;
+    if(krHasDate)    ks+=18;
+    if(krHasPct)     ks+=8;
+    if(krHasRupee)   ks+=6;
+    if(krHasOutcome) ks+=5;
+    if(krHasScope)   ks+=5;
+    ks=Math.min(98,Math.max(28,ks));
+
+    // Build feedback by checking only what's actually missing
+    if(ks>=86){
+      return{kr:i+1,score:ks,feedback:"Strong — has a specific target, a named deadline, and describes an outcome. Ready to upload.",rewrite:""};
+    }
+    const missing=[];
+    if(!krHasMeasure) missing.push("a measurable number, % or ₹ target");
+    if(!krHasDate)    missing.push("a named month and year (e.g. by May 2026)");
+    if(!krHasOutcome) missing.push("outcome language — describe what will be achieved, not just what will be done");
+
+    if(missing.length===0){
+      return{kr:i+1,score:ks,feedback:"Good KR — consider tightening the scope (be specific about geography, team size, or beneficiary count) to make it fully SMARTS-compliant.",rewrite:""};
+    }
+    const what=missing.length===1?`add ${missing[0]}`:
+      missing.length===2?`add ${missing[0]}, and ${missing[1]}`:
+      `add ${missing[0]}, ${missing[1]}, and ${missing[2]}`;
+    const prefix=ks>=70?"Good direction — to reach Keka-ready standard,":ks>=55?"Needs work —":
+      "This reads like a task, not a result —";
+    return{kr:i+1,score:ks,feedback:`${prefix} ${what}.`,rewrite:rewriteKR(kr,krHasMeasure,krHasDate,krHasOutcome)};
+  });
+
+  // Crisp strengths and improvements
+  const strengths=[];
+  const improvements=[];
+
+  if(objVerb) strengths.push("Objective starts with a clear action verb — it's directional and easy to rally behind.");
+  if(hasNumbers>=2) strengths.push(`${hasNumbers} of ${filled.length} Key Results have specific numerical targets — makes tracking straightforward.`);
+  if(hasDates>=2) strengths.push("Deadlines are clearly stated — this creates accountability and makes check-ins actionable.");
+  if(hasPercent>=1) strengths.push("Percentage-based targets show improvement against a baseline, which is best practice.");
+  if(filled.length>=3) strengths.push("Good number of Key Results — enough to fully cover the Objective without spreading too thin.");
+  while(strengths.length>2) strengths.pop();
+  if(strengths.length===0) strengths.push("Objective is clear and understandable — a solid foundation to build from.");
+
+  if(hasDates<filled.length) improvements.push(`Add a month + year deadline to ${filled.length-hasDates} KR(s) — without a date, there is no way to track whether you are on track.`);
+  if(hasNumbers<filled.length) improvements.push("At least one KR has no measurable target. Add a number, %, or ₹ figure — 'improved' or 'better' cannot be measured.");
+  if(filled.length<2) improvements.push("Add at least 2 more Key Results. One KR gives you only one way to know if the Objective was achieved — that's too fragile.");
+  if(!objVerb) improvements.push("Start the Objective with a strong verb (Build, Achieve, Establish, Drive) to make it more inspiring and action-oriented.");
+  while(improvements.length>3) improvements.pop();
+
+  const weakest=[...kr_feedback].sort((a,b)=>a.score-b.score)[0];
+  const weakKR=filled[weakest?weakest.kr-1:0]||"";
+  let revised_example="";
+  if(weakest&&weakest.score<75&&weakKR){
+    revised_example=`"${weakKR.slice(0,55)}${weakKR.length>55?"...":""}" → Rewrite as: "[Measurable outcome with a number or %] in [specific scope] by [Month Year]"`;
+  }
+
+  return{score:base,verdict,dimensions:{specific,measurable,ambitious,result_oriented,time_bound},strengths,improvements,kr_feedback,revised_example,
+    alignment: scoreAlignment(tObjs||[],obj,krs),
+    gaps: findGaps(tObjs||[],krs),
+    recommended_krs: recommendKRs(obj,krs,{specific,measurable,ambitious,result_oriented,time_bound},tObjs||[])
+  };
+}
+
+// ── Check all ──
+async function checkAll(){
+  // Include every objective that has text, even if KRs are partial
+  const valid=objs.filter(o=>o.obj.trim());
+  if(!valid.length) return;
+  const teamSel=document.getElementById("team-sel");
+  const teamLabel=teamSel.options[teamSel.selectedIndex].text;
+  const btn=document.getElementById("check-btn");
+  btn.disabled=true;
+  document.getElementById("results").innerHTML="";
+  lastResults=[];
+
+  const results=[];
+  const total=valid.length;
+  for(let i=0;i<total;i++){
+    btn.innerHTML=`<div class="spin"></div><span>Evaluating ${i+1} of ${total}…</span>`;
+    const o=valid[i];
+    const filledKRs=o.krs.filter(k=>k.trim());
+    // If no KRs at all, record a skipped entry instead of evaluating
+    if(filledKRs.length===0){
+      results.push({o,r:null,teamLabel,skipped:true});
+      continue;
+    }
+    await new Promise(r=>setTimeout(r,1300+Math.random()*500));
+    const r=demoEvaluate(o.obj,o.krs,cascadeOpen?teamObjs:[]);
+    results.push({o,r,teamLabel,skipped:false});
   }
 
   btn.disabled=false;
   btn.innerHTML=`<span>✦</span><span id="check-lbl">${valid.length>1?`Check All ${valid.length} Objectives`:"Check OKR Quality"}</span>`;
+  lastResults=results;
 
-  const avg=Math.round(results.reduce((s,r)=>s+r.r.score,0)/results.length);
+  const scored=results.filter(r=>!r.skipped);
+  const avg=scored.length?Math.round(scored.reduce((s,r)=>s+r.r.score,0)/scored.length):0;
+  const avgVerdict=avg>=90?"Ready to upload":avg>=75?"Minor revisions needed":avg>=60?"Needs revision":"Needs rework";
   let html="";
 
+  // Toolbar — two download buttons
+  html+=`<div class="results-toolbar">
+    <span class="results-title">Quality Report — ${teamLabel}</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-excel" onclick="downloadExcel()">⬇ Quality Report</button>
+      <button class="btn-okr-sheet" onclick="downloadOKRSheet()">📋 Download OKR Sheet</button>
+    </div>
+  </div>`;
+
   if(results.length>1){
-    const av=avg>=90?"Ready to upload":avg>=75?"Minor revisions needed":avg>=60?"Needs revision":"Needs rework";
     html+=`<div class="sum-row">
       <div class="sc"><div class="sc-n" style="color:${sColor(avg)}">${avg}%</div><div class="sc-l">Average score</div></div>
-      <div class="sc"><div class="sc-n">${results.length}</div><div class="sc-l">Objectives reviewed</div></div>
-      <div class="sc"><div class="sc-n" style="color:${sColor(75)}">${results.filter(r=>r.r.score>=75).length}</div><div class="sc-l">Passed 75%+</div></div>
-    </div>
-    <div style="background:${sBg(avg)};border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;color:${sColor(avg)};margin-bottom:14px">
-      Overall verdict: ${av}
+      <div class="sc"><div class="sc-n">${scored.length}</div><div class="sc-l">Objectives evaluated</div></div>
+      <div class="sc"><div class="sc-n" style="color:${sColor(75)}">${scored.filter(r=>r.r.score>=75).length}</div><div class="sc-l">Passed 75%+</div></div>
     </div>`;
+    if(scored.length){
+      html+=`<div class="verdict-banner" style="background:${sBg(avg)};color:${sColor(avg)}">
+        <span style="font-size:18px">${avg>=90?"✅":avg>=75?"👍":avg>=60?"⚠️":"🔴"}</span>
+        <div><strong>${avgVerdict}</strong> &nbsp;—&nbsp; Overall score across ${scored.length} objective${scored.length>1?"s":""} is ${avg}%. ${avg>=75?"These OKRs are on track for Keka.":avg>=60?"Revise the flagged KRs before uploading.":"Significant rewrite needed before these can be uploaded."}</div>
+      </div>`;
+    }
   }
 
-  results.forEach(({o,r},idx)=>{
+  results.forEach(({o,r,skipped},idx)=>{
+    // Objective with no KRs — show a clear notice instead of skipping silently
+    if(skipped){
+      html+=`<div class="res-block">
+        <div class="res-hdr" style="background:#FAEEDA;border-bottom-color:#F0D4A0">
+          <div class="score-col">
+            <div class="score-circle" style="background:#FAEEDA;color:#854F0B;font-size:22px">!</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:#854F0B;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Objective ${idx+1} — Not evaluated</div>
+            <div style="font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.5">${x(o.obj)}</div>
+          </div>
+        </div>
+        <div class="res-body">
+          <div style="font-size:13px;color:#854F0B;display:flex;gap:8px;align-items:flex-start">
+            <span>⚠️</span>
+            <span>No Key Results found for this Objective. Add at least one KR and run the check again to evaluate this objective.</span>
+          </div>
+        </div>
+      </div>`;
+      return;
+    }
     const d=r.dimensions||{};
     const kf=r.kr_feedback||[];
     html+=`<div class="res-block">
@@ -445,30 +954,56 @@ async function checkAll(){
         </div>
       </div>
       <div class="res-body">
-        <div class="sec-hd">SMART scorecard</div>
+        <div class="sec-hd">SMARTS scorecard</div>
         <div class="sg">
-          ${[["specific","Specific (S)",20],["measurable","Measurable (M)",20],["ambitious","Ambitious (A)",20],["time_bound","Time-bound (T)",20],["outcome_focused","Outcome-focused (O)",20]].map(([k,l,m])=>{
+          ${[["specific","S — Specific",20],["measurable","M — Measurable",20],["ambitious","A — Ambitious",20],["result_oriented","R — Result-oriented",20],["time_bound","T — Time-bound",20]].map(([k,l,m])=>{
             const sv=d[k]||0,c=dColor(sv,m);
             return`<div class="dr"><span class="dl">${l}</span><div class="dbg"><div class="db" style="width:${(sv/m)*100}%;background:${c}"></div></div><span class="ds" style="color:${c}">${sv}/${m}</span></div>`;
           }).join("")}
         </div>
-        ${kf.length?`
-        <div class="divl"></div>
+        ${kf.length?`<div class="divl"></div>
         <div class="sec-hd">Key Result breakdown</div>
         ${kf.map(f=>`<div class="kr-card">
           <div class="kr-sc" style="background:${sBg(f.score)};color:${sColor(f.score)}">${f.score}%</div>
-          <div><div class="kr-lbl">KR ${f.kr}</div><div class="kr-txt">${x(f.feedback||"")}</div></div>
+          <div style="flex:1">
+            <div class="kr-lbl">KR ${f.kr}</div>
+            <div class="kr-txt">${x(f.feedback)}</div>
+            ${f.rewrite?`<div class="kr-rewrite"><div class="kr-rewrite-lbl">💡 Suggested rewrite</div>${x(f.rewrite)}</div>`:""}
+          </div>
         </div>`).join("")}`:""}
         <div class="divl"></div>
-        ${r.strengths?.length?`<div class="sec-hd" style="margin-bottom:6px">Strengths</div>
-        <ul class="fb-list" style="margin-bottom:12px">
-          ${r.strengths.map(s=>`<li><div class="fi fi-ok">✓</div>${x(s)}</li>`).join("")}
-        </ul>`:""}
-        ${r.improvements?.length?`<div class="sec-hd" style="margin-bottom:6px">Points to improve</div>
-        <ul class="fb-list" style="margin-bottom:12px">
-          ${r.improvements.map(s=>`<li><div class="fi fi-w">!</div>${x(s)}</li>`).join("")}
-        </ul>`:""}
-        ${r.revised_example?`<div class="imp"><strong>💡 Suggested revision of weakest KR:</strong> ${x(r.revised_example)}</div>`:""}
+        ${r.strengths?.length?`<div class="rec-box" style="background:#F0FAF0;border:1px solid #C3E6CB">
+          <div class="rec-box-title" style="color:#3B6D11">✓ What works</div>
+          <ul class="fb-list">${r.strengths.map(s=>`<li><div class="fi fi-ok">✓</div>${x(s)}</li>`).join("")}</ul>
+        </div>`:""}
+        ${r.improvements?.length?`<div class="rec-box" style="background:#FFF8F0;border:1px solid #FCDCB7;margin-top:8px">
+          <div class="rec-box-title" style="color:#854F0B">→ Fix before uploading to Keka</div>
+          <ul class="fb-list">${r.improvements.map(s=>`<li><div class="fi fi-w">!</div>${x(s)}</li>`).join("")}</ul>
+        </div>`:""}
+        ${r.revised_example?`<div class="imp"><strong>💡 Rewrite suggestion for weakest KR:</strong><br>${x(r.revised_example)}</div>`:""}
+        ${r.alignment&&cascadeOpen?`
+        <div class="divl"></div>
+        <div class="align-block">
+          <div class="align-hd">🔗 Alignment with Team OKR</div>
+          <div class="align-score-row">
+            <span class="align-score-pill" style="background:${r.alignment.score>=75?'#EAF3DE':r.alignment.score>=50?'#FAEEDA':'#FAECE7'};color:${r.alignment.score>=75?'#3B6D11':r.alignment.score>=50?'#854F0B':'#993C1D'}">${r.alignment.score}%</span>
+            <div class="align-bar-bg"><div class="align-bar" style="width:${r.alignment.score}%;background:${r.alignment.score>=75?'#639922':r.alignment.score>=50?'#BA7517':'#D85A30'}"></div></div>
+            <span style="font-size:12px;font-weight:600;color:${r.alignment.score>=75?'#3B6D11':r.alignment.score>=50?'#854F0B':'#993C1D'}">${r.alignment.score>=75?'Well aligned':r.alignment.score>=50?'Partial alignment':'Weak alignment'}</span>
+          </div>
+          ${r.alignment.matchedObj?`<div class="align-matched-obj"><div class="align-matched-label">Best match — Team Objective</div>${x(r.alignment.matchedObj)}</div>`:""}
+          ${r.gaps&&r.gaps.length?`<div class="align-gaps"><div style="font-size:11px;font-weight:600;color:#854F0B;margin-bottom:5px">⚠️ Gaps to address</div>${r.gaps.map(g=>`<div class="align-gap-item"><span style="color:#854F0B;flex-shrink:0">→</span><span>${x(g)}</span></div>`).join("")}</div>`:""}
+        </div>`:""}
+        ${r.recommended_krs&&r.recommended_krs.length?`
+        <div class="rec-kr-block">
+          <div class="rec-kr-hd">✦ Recommended Key Results to add${cascadeOpen?" (aligned to your team OKR)":""}</div>
+          ${r.recommended_krs.map((rec,ri)=>`<div class="rec-kr-item">
+            <div class="rec-kr-num">${ri+1}</div>
+            <div>
+              <div class="rec-kr-text">${x(rec.text)}</div>
+              ${rec.note?`<div class="rec-kr-note">${x(rec.note)}</div>`:""}
+            </div>
+          </div>`).join("")}
+        </div>`:""}
       </div>
     </div>`;
   });
@@ -476,8 +1011,202 @@ async function checkAll(){
   document.getElementById("results").innerHTML=html;
 }
 
+// ── Excel download ──
+function downloadExcel(){
+  if(!lastResults.length) return;
+  const teamSel=document.getElementById("team-sel");
+  const teamLabel=teamSel.options[teamSel.selectedIndex].text;
+
+  const rows=[["Team / Function","Objective #","Objective","KR1","KR2","KR3","KR4","KR5","Score %","Verdict","What works","Fix before uploading","Alignment %","Alignment verdict","Recommended KR 1","Recommended KR 2","Recommended KR 3"]];
+  lastResults.forEach(({o,r},idx)=>{
+    const krs=o.krs.filter(k=>k.trim());
+    const teamSel=document.getElementById("team-sel");
+    const tl=teamSel?teamSel.options[teamSel.selectedIndex].text:"";
+    rows.push([
+      tl, idx+1, o.obj,
+      krs[0]||"",krs[1]||"",krs[2]||"",krs[3]||"",krs[4]||"",
+      r.score+"%", r.verdict,
+      (r.strengths||[]).join(" | "),
+      (r.improvements||[]).join(" | "),
+      r.alignment?(r.alignment.score+"%"):"—",
+      r.alignment?(r.alignment.score>=75?"Well aligned":r.alignment.score>=50?"Partial alignment":"Weak alignment"):"—",
+      (r.recommended_krs||[])[0]?(r.recommended_krs[0].text||""):"",
+      (r.recommended_krs||[])[1]?(r.recommended_krs[1].text||""):"",
+      (r.recommended_krs||[])[2]?(r.recommended_krs[2].text||""):"",
+    ]);
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  // Column widths
+  ws["!cols"]=[{wch:28},{wch:6},{wch:50},{wch:40},{wch:40},{wch:40},{wch:40},{wch:40},{wch:8},{wch:22},{wch:50},{wch:60},{wch:12},{wch:18},{wch:55},{wch:55},{wch:55}];
+  // Header style (bold row 1)
+  const range=XLSX.utils.decode_range(ws["!ref"]);
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const addr=XLSX.utils.encode_cell({r:0,c});
+    if(!ws[addr]) continue;
+    ws[addr].s={font:{bold:true},fill:{fgColor:{rgb:"F9F8F6"}}};
+  }
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"OKR Quality Report");
+  const date=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`Nudge_OKR_Quality_Report_${date}.xlsx`);
+}
+
+// ── Download clean OKR sheet ──
+function downloadOKRSheet(){
+  if(!lastResults.length) return;
+  const teamSel=document.getElementById("team-sel");
+  const tl=teamSel?teamSel.options[teamSel.selectedIndex].text:"";
+  const date=new Date().toISOString().slice(0,10);
+
+  // Header row
+  const rows=[["Team / Function","Objective","Key Result 1","Key Result 2","Key Result 3","Key Result 4","Key Result 5","Quality Score","Keka Status"]];
+
+  lastResults.forEach(({o,r,skipped},idx)=>{
+    const krs=o.krs.filter(k=>k.trim());
+    rows.push([
+      tl,
+      o.obj,
+      krs[0]||"",
+      krs[1]||"",
+      krs[2]||"",
+      krs[3]||"",
+      krs[4]||"",
+      skipped?"No KRs added":(r.score+"%"),
+      skipped?"Add KRs and re-check":r.verdict,
+    ]);
+    // Empty spacer row between objectives for readability
+    rows.push(["","","","","","","","",""]);
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"]=[{wch:30},{wch:55},{wch:50},{wch:50},{wch:50},{wch:50},{wch:50},{wch:14},{wch:24}];
+
+  // Style header bold
+  const range=XLSX.utils.decode_range(ws["!ref"]);
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const addr=XLSX.utils.encode_cell({r:0,c});
+    if(ws[addr]) ws[addr].s={font:{bold:true},fill:{fgColor:{rgb:"FAECE7"}}};
+  }
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"OKR Sheet");
+  XLSX.writeFile(wb,`Nudge_OKR_Sheet_${tl.replace(/[^a-zA-Z0-9]/g,"_")}_${date}.xlsx`);
+}
+
+// ── Bulk upload functions ──
+function toggleBulkPanel(){
+  const p=document.getElementById("bulk-panel");
+  p.classList.toggle("open");
+  if(p.classList.contains("open")) clearBulkMsg();
+}
+
+function switchBulkTab(tab){
+  document.getElementById("bulk-file-panel").style.display=tab==="file"?"block":"none";
+  document.getElementById("bulk-paste-panel").style.display=tab==="paste"?"block":"none";
+  document.getElementById("btab-file").classList.toggle("active",tab==="file");
+  document.getElementById("btab-paste").classList.toggle("active",tab==="paste");
+  clearBulkMsg();
+}
+
+function clearBulkMsg(){
+  const m=document.getElementById("bulk-msg");
+  m.className="bulk-msg"; m.textContent="";
+}
+
+function showBulkMsg(text,type){
+  const m=document.getElementById("bulk-msg");
+  m.className="bulk-msg "+type; m.textContent=text;
+}
+
+function handleBulkDrop(e){
+  e.preventDefault();
+  document.getElementById("bulk-drop-zone").classList.remove("over");
+  const file=e.dataTransfer.files[0];
+  if(file) processFile(file);
+}
+
+function handleBulkFile(e){
+  const file=e.target.files[0];
+  if(file) processFile(file);
+  e.target.value="";
+}
+
+function processFile(file){
+  if(!window.XLSX){showBulkMsg("SheetJS not loaded. Please refresh and try again.","err");return;}
+  const ext=file.name.split(".").pop().toLowerCase();
+  if(!["xlsx","xls","csv"].includes(ext)){showBulkMsg("Please upload a .xlsx, .xls or .csv file.","err");return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      // Skip header row if first cell looks like a label
+      const start=/^obj/i.test(String(rows[0]?.[0]||""))?1:0;
+      const dataRows=rows.slice(start).filter(r=>String(r[0]||"").trim());
+      applyBulkData(dataRows);
+    }catch(err){showBulkMsg("Could not read file. Please check the format matches the template.","err");}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function applyBulkData(rows){
+  if(!rows.length){showBulkMsg("No data rows found in the file.","err");return;}
+  const trimmed=rows.slice(0,3); // max 3 objectives
+  objs=trimmed.map(row=>{
+    const obj=String(row[0]||"").trim();
+    const krs=[1,2,3,4,5].map(i=>String(row[i]||"").trim()).filter(k=>k);
+    if(!krs.length) krs.push("","",""); else while(krs.length<3) krs.push("");
+    return{id:Date.now()+Math.random(),obj,krs};
+  });
+  render();
+  showBulkMsg(`✅ Imported ${trimmed.length} Objective${trimmed.length>1?"s":""}. Review below and click "Check OKR Quality".`,"ok");
+  // Close panel after a beat
+  setTimeout(()=>document.getElementById("bulk-panel").classList.remove("open"),1800);
+}
+
+function importBulkPaste(){
+  const raw=document.getElementById("bulk-paste-input").value.trim();
+  if(!raw){showBulkMsg("Paste your OKRs in the format shown above, then click Import.","err");return;}
+  // Split on blank lines to get objective blocks
+  const blocks=raw.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+  const rows=blocks.map(block=>{
+    const lines=block.split("\n").map(l=>l.trim()).filter(Boolean);
+    let objText="", krs=[];
+    lines.forEach(line=>{
+      const objMatch=line.match(/^(?:objective\s*\d*\s*[:：]?\s*)(.*)/i);
+      const krMatch=line.match(/^(?:kr\s*\d+\s*[:：]\s*|key result\s*\d*\s*[:：]\s*)(.*)/i);
+      if(objMatch) objText=objMatch[1].trim();
+      else if(krMatch) krs.push(krMatch[1].trim());
+      else if(!objText) objText=line; // first untagged line = objective
+      else krs.push(line.replace(/^[-•*]\s*/,"").trim());
+    });
+    return [objText,...krs];
+  });
+  applyBulkData(rows);
+}
+
+function downloadBulkTemplate(){
+  if(!window.XLSX){alert("SheetJS not loaded. Please refresh.");return;}
+  const rows=[
+    ["Objective","KR1","KR2","KR3","KR4","KR5"],
+    ["e.g. Equip 2,000 youth with market-relevant skills by March 2026","Train 2,000 youth across 6 skilling verticals by December 2025","Achieve 70% placement rate within 60 days of course completion by March 2026","Retain 80% of placed youth in employment for 6 months by March 2026","",""],
+    ["","","","","",""],
+    ["","","","","",""],
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"]=[{wch:55},{wch:50},{wch:50},{wch:50},{wch:50},{wch:50}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"OKR Template");
+  XLSX.writeFile(wb,"Nudge_OKR_Bulk_Upload_Template.xlsx");
+}
+
 // ── Samples ──
-const TEAMS=[{id:"eip",label:"Economic Inclusion Program (EIP)"},{id:"asha",label:"Asha Kiran"},{id:"skilling",label:"Centre for Skill Development & Entrepreneurship"},{id:"incubator",label:"Social Entrepreneurship — Incubator & Accelerator"},{id:"iaf",label:"Indian Administrative Fellowship (IAF)"},{id:"fundraising",label:"Fundraising & Partnerships"},{id:"tech",label:"Technology, Data & Insights"},{id:"impact",label:"Impact & Evaluation"},{id:"comms",label:"Marketing & Communications"},{id:"hr",label:"People & Culture"},{id:"finance",label:"Finance & Operations"}];
+const TEAMS=[{id:"eip",label:"Economic Inclusion Program (EIP)"},{id:"asha",label:"Asha Kiran"},{id:"skilling",label:"Centre S/O"},{id:"incubator",label:"Social Entrepreneurship — Incubator & Accelerator"},{id:"iaf",label:"Indian Administrative Fellowship (IAF)"},{id:"fundraising",label:"Fundraising & Partnerships"},{id:"tech",label:"Technology, Data & Insights"},{id:"impact",label:"Impact & Evaluation"},{id:"comms",label:"Marketing & Communications"},{id:"hr",label:"People & Culture"},{id:"finance",label:"Finance & Operations"}];
+
 const SAMPLES={
 eip:[{obj:"Successfully enroll and onboard 2,000 ultra-poor households in Gumla district by March 2026",krs:["Complete participatory identification of 2,000 eligible households using PPI scorecard across all 40 target villages by Jan 2026","Ensure 90% of enrolled households have an active SHG linkage and a bank account opened by Feb 2026","Achieve 85% attendance in the first two months of weekly changemaker mentoring sessions across enrolled households by March 2026"]},{obj:"Strengthen livelihood adoption and income stabilization for 1,500 graduation-stage households in Jharkhand",krs:["80% of households in the livelihood phase adopt their chosen enterprise with documented asset transfer by June 2026","Average monthly household income crosses ₹4,500 for 70% of households at the 6-month check-in by Sep 2026","Reduce programme dropout rate to below 8% by sustaining bi-weekly household visits through the livelihood phase"]},{obj:"Build SRLM partner capability to independently run the graduation programme in Assam",krs:["Train 60 ASRLM block-level staff on graduation approach protocols and mentoring techniques by Feb 2026","ASRLM staff independently verify 500 households with less than 5% error rate, validated by Nudge team, by March 2026","ASRLM submits monthly MIS reports on time with 95% data completeness for 3 consecutive months by June 2026"]}],
 asha:[{obj:"Build sustainable backyard livelihoods for 3,500 rural women through goatery and poultry by March 2026",krs:["Enrol 3,500 rural women into the Asha Kiran programme across target districts by December 2025","75% of enrolled women report a minimum 30% increase in monthly household income within 12 months of joining","Establish functioning market linkages for poultry and goat produce in 10 cluster districts by January 2026"]},{obj:"Develop a replicable dairy livelihood model ready for government handoff by June 2026",krs:["Document complete SOPs for dairy enterprise setup including vendor linkages, vet contacts, and feed sourcing for 3 districts by Feb 2026","Pilot the dairy model with 200 households and capture per-household income, cost, and dropout data monthly through June 2026","Average monthly dairy income for pilot households reaches ₹3,000 with 75% household retention by June 2026"]},{obj:"Validate the backyard poultry model for scale across 5 states with a go-to-market playbook",krs:["Consolidate learnings from Jharkhand and West Bengal pilots into a playbook with costings and risk mitigation by March 2026","Field-test the playbook with 150 fresh households in Tripura and validate flock survival rate at 80%+ by June 2026","Get sign-off from 2 state programme heads confirming the playbook is ready for independent use by Aug 2026"]}],
@@ -494,6 +1223,9 @@ finance:[{obj:"Ensure financial health, compliance, and operational efficiency a
 
 function buildSamples(id){
   sTeam=id;
+  const t=TEAMS.find(t=>t.id===id);
+  const hdr=document.getElementById("sample-team-hdr");
+  if(hdr&&t){hdr.style.display="flex";hdr.innerHTML=`<span>📋</span> Showing sample OKRs for <strong style="margin-left:4px">${x(t.label)}</strong>`;}
   const sets=SAMPLES[id]||[];
   document.getElementById("sample-content").innerHTML=sets.map((s,i)=>`
     <div class="sset">
@@ -502,15 +1234,24 @@ function buildSamples(id){
     </div>`).join("");
   document.querySelectorAll(".tpill").forEach(p=>p.classList.toggle("on",p.dataset.t===id));
 }
+
 function buildPills(){
   document.getElementById("pills").innerHTML=TEAMS.map(t=>`<button class="tpill${t.id===sTeam?" on":""}" data-t="${t.id}" onclick="buildSamples('${t.id}')">${x(t.label)}</button>`).join("");
 }
+
 function showTab(id,btn){
   ["checker","samples","guide"].forEach(t=>document.getElementById("tab-"+t).style.display=t===id?"":"none");
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   btn.classList.add("active");
-  if(id==="samples"){buildPills();buildSamples(sTeam);}
+  if(id==="samples"){
+    // Sync to whichever team is selected in the checker
+    const sel=document.getElementById("team-sel");
+    sTeam=sel?sel.value:sTeam;
+    buildPills();
+    buildSamples(sTeam);
+  }
 }
+
 render();
 </script>
 </body>
